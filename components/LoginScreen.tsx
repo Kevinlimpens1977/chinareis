@@ -12,6 +12,36 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onLoginSuccess, onFor
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+    const [resendSuccess, setResendSuccess] = useState(false);
+
+    const handleResendConfirmation = async () => {
+        if (!email) {
+            setError('Vul eerst je email adres in');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { error: resendError } = await supabase.auth.resend({
+                type: 'signup',
+                email: email
+            });
+
+            if (resendError) throw resendError;
+
+            setResendSuccess(true);
+            setShowResendConfirmation(false);
+            setTimeout(() => setResendSuccess(false), 5000);
+        } catch (err: any) {
+            console.error('Resend error:', err);
+            setError(err.message || 'Kon bevestigingsmail niet opnieuw versturen.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,6 +49,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onLoginSuccess, onFor
 
         setLoading(true);
         setError(null);
+        setShowResendConfirmation(false);
 
         try {
             const { data, error: loginError } = await supabase.auth.signInWithPassword({
@@ -26,10 +57,21 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onLoginSuccess, onFor
                 password
             });
 
-            if (loginError) throw loginError;
+            if (loginError) {
+                // Check if it's an email not confirmed error
+                if (loginError.message.toLowerCase().includes('email not confirmed')) {
+                    setShowResendConfirmation(true);
+                    setError('Je email is nog niet geverifieerd. Check je inbox of vraag een nieuwe bevestigingsmail aan.');
+                } else {
+                    throw loginError;
+                }
+                setLoading(false);
+                return;
+            }
 
             if (!data.user?.email_confirmed_at) {
-                setError('Je email is nog niet geverifieerd. Check je inbox!');
+                setShowResendConfirmation(true);
+                setError('Je email is nog niet geverifieerd. Check je inbox of vraag een nieuwe bevestigingsmail aan.');
                 setLoading(false);
                 return;
             }
@@ -53,9 +95,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onLoginSuccess, onFor
                     Inloggen
                 </h2>
 
+                {resendSuccess && (
+                    <div className="bg-green-500/20 border border-green-500/50 text-green-200 p-3 rounded-xl mb-4 text-sm text-center">
+                        ✅ Bevestigingsmail opnieuw verstuurd! Check je inbox.
+                    </div>
+                )}
+
                 {error && (
                     <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-xl mb-4 text-sm text-center">
                         {error}
+                    </div>
+                )}
+
+                {showResendConfirmation && (
+                    <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-xl p-4 mb-4">
+                        <p className="text-sm text-yellow-200 mb-3 text-center">
+                            Heb je de bevestigingsmail niet ontvangen?
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleResendConfirmation}
+                            disabled={loading}
+                            className="w-full py-2 rounded-xl bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-sm transition-colors disabled:opacity-50"
+                        >
+                            📧 Verstuur opnieuw
+                        </button>
                     </div>
                 )}
 
