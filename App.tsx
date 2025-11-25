@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import WelcomeScreen from './components/WelcomeScreen';
+import LoginScreen from './components/LoginScreen';
 import TitleScreen from './components/TitleScreen';
 import RegistrationForm from './components/RegistrationForm';
 import HUD from './components/HUD';
@@ -33,7 +35,7 @@ const getShapeMatrix = (type: TetrominoType, rotation: number) => {
 
 const App: React.FC = () => {
   // --- State ---
-  const [gameState, setGameState] = useState<GameState>(GameState.TITLE);
+  const [gameState, setGameState] = useState<GameState>(GameState.WELCOME);
   const [user, setUser] = useState<UserData | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -122,9 +124,11 @@ const App: React.FC = () => {
         };
         setUser(userData);
 
-        // If we're on title or registration screen, automatically go to title
-        // so user can click "SPEEL MEE" to start
-        if (gameStateRef.current === GameState.REGISTRATION) {
+        // If we're on welcome, login, or registration screen, automatically go to title
+        // so user can click "START SPEL" to start
+        if (gameStateRef.current === GameState.WELCOME ||
+          gameStateRef.current === GameState.LOGIN ||
+          gameStateRef.current === GameState.REGISTRATION) {
           setGameState(GameState.TITLE);
         }
       }
@@ -499,6 +503,24 @@ const App: React.FC = () => {
         />
       )}
 
+      {gameState === GameState.WELCOME && (
+        <WelcomeScreen
+          onLogin={() => setGameState(GameState.LOGIN)}
+          onRegister={() => setGameState(GameState.REGISTRATION)}
+        />
+      )}
+
+      {gameState === GameState.LOGIN && (
+        <LoginScreen
+          onBack={() => setGameState(GameState.WELCOME)}
+          onLoginSuccess={() => setGameState(GameState.TITLE)}
+          onForgotPassword={() => {
+            // TODO: Implement password reset
+            alert('Wachtwoord reset functionaliteit komt binnenkort!');
+          }}
+        />
+      )}
+
       {gameState === GameState.TITLE && (
         <TitleScreen
           onStart={handleStartClick}
@@ -509,7 +531,7 @@ const App: React.FC = () => {
       )}
 
       {gameState === GameState.REGISTRATION && (
-        <RegistrationForm onSubmit={handleRegistration} onBack={() => setGameState(GameState.TITLE)} />
+        <RegistrationForm onSubmit={handleRegistration} onBack={() => setGameState(GameState.WELCOME)} />
       )}
 
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (

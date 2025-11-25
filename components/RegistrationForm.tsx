@@ -8,10 +8,12 @@ interface RegistrationFormProps {
 }
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack }) => {
-  const [formData, setFormData] = useState<UserData>({
+  const [formData, setFormData] = useState({
     name: '',
     city: '',
-    email: ''
+    email: '',
+    password: '',
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,16 +21,26 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.city || !formData.email) return;
+    if (!formData.name || !formData.city || !formData.email || !formData.password) return;
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Wachtwoorden komen niet overeen');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Wachtwoord moet minimaal 6 tekens lang zijn');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // 1. Create Supabase Auth User
+      // 1. Create Supabase Auth User with real password
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
-        password: crypto.randomUUID(), // Random password as they won't use it to login manually
+        password: formData.password,
         options: {
           data: {
             name: formData.name,
@@ -131,6 +143,32 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack })
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               placeholder="naam@voorbeeld.nl"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Wachtwoord</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
+              value={formData.password}
+              onChange={e => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Minimaal 6 tekens"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Bevestig Wachtwoord</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
+              value={formData.confirmPassword}
+              onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+              placeholder="Herhaal wachtwoord"
             />
           </div>
 

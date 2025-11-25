@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { supabase } from '../services/supabase';
+
+interface LoginScreenProps {
+    onBack: () => void;
+    onLoginSuccess: () => void;
+    onForgotPassword: () => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onLoginSuccess, onForgotPassword }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { data, error: loginError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (loginError) throw loginError;
+
+            if (!data.user?.email_confirmed_at) {
+                setError('Je email is nog niet geverifieerd. Check je inbox!');
+                setLoading(false);
+                return;
+            }
+
+            onLoginSuccess();
+        } catch (err: any) {
+            console.error('Login error:', err);
+            setError(err.message || 'Inloggen mislukt. Controleer je gegevens.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6">
+            <div className="glass-panel p-8 rounded-3xl max-w-md w-full shadow-2xl border border-white/20 relative">
+                {/* Festive Decor */}
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-5xl">🎅</div>
+
+                <h2 className="text-2xl font-bold text-center mb-6 mt-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-300">
+                    Inloggen
+                </h2>
+
+                {error && (
+                    <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-xl mb-4 text-sm text-center">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Email Adres</label>
+                        <input
+                            type="email"
+                            required
+                            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            placeholder="naam@voorbeeld.nl"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Wachtwoord</label>
+                        <input
+                            type="password"
+                            required
+                            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                        />
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onForgotPassword}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                        Wachtwoord vergeten?
+                    </button>
+
+                    <div className="flex gap-4 pt-2">
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            disabled={loading}
+                            className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors disabled:opacity-50"
+                        >
+                            Terug
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                        >
+                            {loading ? 'Bezig...' : 'INLOGGEN'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default LoginScreen;
