@@ -5,9 +5,10 @@ import { supabase } from '../services/supabase';
 interface RegistrationFormProps {
   onSubmit: (data: UserData) => void;
   onBack: () => void;
+  onGoToLogin: () => void;
 }
 
-const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack }) => {
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, onGoToLogin }) => {
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -78,15 +79,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack })
         <div className="glass-panel p-8 rounded-3xl max-w-md w-full shadow-2xl border border-white/20 text-center">
           <div className="text-5xl mb-4">📩</div>
           <h2 className="text-2xl font-bold text-white mb-4">Check je e-mail!</h2>
-          <p className="text-gray-300 mb-6">
-            We hebben een bevestigingslink gestuurd naar <span className="text-cyan-400">{formData.email}</span>.
-            Klik op de link om je registratie te voltooien en het spel te starten.
+          <p className="text-gray-300 mb-4">
+            We hebben een bevestigingslink gestuurd naar <span className="text-cyan-400 font-bold">{formData.email}</span>.
           </p>
+          <div className="bg-cyan-900/30 border border-cyan-500/50 rounded-xl p-4 mb-6">
+            <p className="text-sm text-cyan-200 leading-relaxed">
+              <strong className="text-cyan-300">📌 Belangrijk:</strong><br />
+              Klik op de link in je email om je account te activeren.
+              <strong className="text-white"> Daarna kun je inloggen met je wachtwoord!</strong>
+            </p>
+          </div>
           <button
-            onClick={onBack}
-            className="py-3 px-8 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors"
+            onClick={onGoToLogin}
+            className="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold transition-all transform hover:scale-105"
           >
-            Terug naar start
+            Naar inloggen
           </button>
         </div>
       </div>

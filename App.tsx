@@ -552,7 +552,11 @@ const App: React.FC = () => {
       )}
 
       {gameState === GameState.REGISTRATION && (
-        <RegistrationForm onSubmit={handleRegistration} onBack={() => setGameState(GameState.WELCOME)} />
+        <RegistrationForm
+          onSubmit={handleRegistration}
+          onBack={() => setGameState(GameState.WELCOME)}
+          onGoToLogin={() => setGameState(GameState.LOGIN)}
+        />
       )}
 
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
