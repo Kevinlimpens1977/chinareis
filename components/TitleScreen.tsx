@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { LeaderboardEntry } from '../types';
+import { LeaderboardEntry, UserData } from '../types';
 
 interface TitleScreenProps {
     onStart: () => void;
     leaderboard: LeaderboardEntry[];
     onClearSnow: () => void;
+    user: UserData | null;
 }
 
 interface SnowyContainerProps {
@@ -69,7 +70,7 @@ const ChristmasLights = () => (
     </div>
 );
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, onClearSnow }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, onClearSnow, user }) => {
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
     useEffect(() => {
@@ -158,12 +159,23 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, onClear
                             </div>
                         </div>
 
+                        {/* Welcome message for logged in users */}
+                        {user && (
+                            <div className="text-center mb-2">
+                                <p className="text-sm text-cyan-300">
+                                    Welkom terug, <span className="font-bold text-white">{user.name}</span>! 🎮
+                                </p>
+                            </div>
+                        )}
+
                         {/* Main Action Button (Moved here) */}
                         <button
                             onClick={onStart}
                             className="group relative w-full md:w-auto px-10 py-3 rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border border-red-400/30"
                         >
-                            <span className="animate-bounce">🎅</span> SPEEL MEE <span className="animate-bounce delay-100">🎁</span>
+                            <span className="animate-bounce">🎅</span>
+                            {user ? 'START SPEL' : 'SPEEL MEE'}
+                            <span className="animate-bounce delay-100">🎁</span>
 
                             {/* Button Decoration */}
                             <div className="absolute top-0 right-0 -mt-1 -mr-1 w-4 h-4 bg-yellow-400 rounded-full blur-sm opacity-50 group-hover:opacity-100"></div>

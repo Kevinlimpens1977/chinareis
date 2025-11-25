@@ -113,13 +113,20 @@ const App: React.FC = () => {
 
     // Listen for auth changes (e.g. if they click the email link while app is open)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event === 'SIGNED_IN' && session?.user && session.user.email_confirmed_at) {
         const { name, city } = session.user.user_metadata;
-        setUser({
+        const userData = {
           name: name || 'Speler',
           city: city || 'Onbekend',
           email: session.user.email || ''
-        });
+        };
+        setUser(userData);
+
+        // If we're on title or registration screen, automatically go to title
+        // so user can click "SPEEL MEE" to start
+        if (gameStateRef.current === GameState.REGISTRATION) {
+          setGameState(GameState.TITLE);
+        }
       }
     });
 
@@ -497,6 +504,7 @@ const App: React.FC = () => {
           onStart={handleStartClick}
           leaderboard={leaderboard}
           onClearSnow={() => snowEffectRef.current?.triggerPlow()}
+          user={user}
         />
       )}
 
