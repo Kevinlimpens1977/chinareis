@@ -46,8 +46,8 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
           data: {
             name: formData.name,
             city: formData.city
-          },
-          emailRedirectTo: window.location.origin
+          }
+          // emailRedirectTo will use the Site URL from Supabase dashboard
         }
       });
 
