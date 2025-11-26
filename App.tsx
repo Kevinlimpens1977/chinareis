@@ -754,29 +754,18 @@ const App: React.FC = () => {
 
       {/* Exit Button (Only in Gameplay) */}
       {gameState === GameState.PLAYING && (
-        <>
-          <button
-            onClick={handleExitClick}
-            className="absolute top-3 right-3 z-50 group hover:scale-110 transition-transform"
-            title="Verlaten / Pauze"
-          >
-            <div className="relative w-12 h-12 md:w-16 md:h-16">
-              <div className="absolute inset-0 text-4xl md:text-5xl drop-shadow-md">🎅</div>
-              <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
-                ✕
-              </div>
+        <button
+          onClick={handleExitClick}
+          className="absolute top-3 right-3 z-50 group hover:scale-110 transition-transform"
+          title="Verlaten / Pauze"
+        >
+          <div className="relative w-12 h-12 md:w-16 md:h-16">
+            <div className="absolute inset-0 text-4xl md:text-5xl drop-shadow-md">🎅</div>
+            <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
+              ✕
             </div>
-          </button>
-
-          {/* Mobile Rotate Button */}
-          <button
-            className="md:hidden absolute bottom-6 right-6 w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center active:bg-white/30 transition-all z-50 touch-none shadow-lg active:scale-95"
-            onTouchStart={(e) => { e.preventDefault(); rotatePiece(); }}
-            onClick={(e) => { e.preventDefault(); rotatePiece(); }} // Fallback
-          >
-            <span className="text-3xl text-white drop-shadow-md">↻</span>
-          </button>
-        </>
+          </div>
+        </button>
       )}
 
       {/* Leaderboard / Pause Modal */}
@@ -845,21 +834,24 @@ const App: React.FC = () => {
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
         <div className="flex flex-col w-full h-full max-w-7xl mx-auto p-1 md:p-4 overflow-hidden animate-fade-in-up">
 
-          <div className="flex-none flex justify-between items-center bg-black/60 backdrop-blur-xl rounded-xl p-2 md:p-3 border border-red-500/30 z-20 mr-12 md:mr-0 mb-2 max-w-lg mx-auto w-full shadow-lg relative overflow-hidden">
-            {/* Subtle red glow at top */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+          {/* Header - Styled like HUD panels */}
+          <div className="flex-none relative group overflow-hidden rounded-xl md:rounded-2xl p-[1px] md:p-[2px] mb-2 max-w-lg mx-auto w-full shadow-[0_0_15px_rgba(239,68,68,0.15)] transition-all duration-300">
+            {/* Animated Border */}
+            <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
 
-            <div className="flex flex-col">
-              <div className="text-[10px] md:text-xs uppercase tracking-widest text-gray-400 truncate mr-2">
-                Speler: <span className="text-white font-bold">{user?.name}</span>
-              </div>
-              <div className="text-[10px] md:text-xs uppercase tracking-widest text-gray-400 whitespace-nowrap">
-                Top Score: <span className="text-yellow-400 font-bold">{leaderboard[0]?.highscore?.toLocaleString() || 0}</span>
+            {/* Content */}
+            <div className="relative w-full h-full bg-black/60 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] p-3 md:p-4">
+              <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1">
+                  <div className="text-[10px] md:text-xs uppercase tracking-widest text-gray-400">
+                    Speler: <span className="text-white font-bold">{user?.name}</span>
+                  </div>
+                  <div className="text-[10px] md:text-xs uppercase tracking-widest text-gray-400">
+                    Top Score: <span className="text-yellow-400 font-bold">{leaderboard[0]?.highscore?.toLocaleString() || 0}</span>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Santa Icon */}
-            <div className="text-3xl filter drop-shadow-md animate-float">🎅</div>
           </div>
 
           <div

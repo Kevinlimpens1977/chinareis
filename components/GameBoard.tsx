@@ -664,10 +664,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div
             ref={containerRef}
             className="
-      relative h-full w-full max-w-[90vw] md:max-w-none aspect-[10/20] 
-      flex items-center justify-center 
-      rounded-xl 
-      p-0
+      relative h-full w-full max-w-[90vw] md:max-w-none aspect-[10/20]
+      flex items-center justify-center
+      rounded-xl
+      p-2
       shadow-[0_0_30px_rgba(0,0,0,0.5)]
     ">
             {/* Christmas Lights Border */}

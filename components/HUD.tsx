@@ -51,6 +51,19 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
     const color = type ? TETROMINOS[type].color : 'transparent';
     const glow = type ? TETROMINOS[type].glowColor : 'transparent';
 
+    // Calculate block size based on shape dimensions
+    const getBlockSize = () => {
+      if (!type) return 12;
+      const rows = shape.length;
+      const cols = shape[0].length;
+      // Scale down larger pieces
+      if (rows >= 4 || cols >= 4) return 8;
+      if (rows >= 3 || cols >= 3) return 10;
+      return 12;
+    };
+
+    const blockSize = getBlockSize();
+
     return (
       <div className={`
         relative group overflow-hidden
@@ -69,26 +82,27 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
             {type && (
               <div style={{
                 display: 'grid',
-                gridTemplateRows: `repeat(${shape.length}, 1fr)`,
-                gridTemplateColumns: `repeat(${shape[0].length}, 1fr)`,
+                gridTemplateRows: `repeat(${shape.length}, ${blockSize}px)`,
+                gridTemplateColumns: `repeat(${shape[0].length}, ${blockSize}px)`,
                 gap: '2px',
-                transform: 'scale(0.9)'
               }}>
                 {shape.map((row, y) => row.map((cell, x) => (
                   <div key={`${y}-${x}`} style={{
-                    width: '10px',
-                    height: '10px',
+                    width: `${blockSize}px`,
+                    height: `${blockSize}px`,
                     backgroundColor: cell ? color : 'transparent',
-                    boxShadow: cell ? `0 0 8px ${glow}` : 'none',
+                    boxShadow: cell ? `0 0 10px ${glow}, inset 0 0 5px rgba(255,255,255,0.3)` : 'none',
                     borderRadius: '2px',
                     opacity: cell ? 1 : 0,
-                    border: cell ? `1px solid ${color}` : 'none'
+                    border: cell ? `1px solid rgba(255,255,255,0.2)` : 'none'
                   }} />
                 )))}
               </div>
             )}
             {!type && <span className="text-white/20 text-2xl font-black">?</span>}
           </div>
+          {/* Soft red spotlight at bottom */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-gradient-to-t from-red-500/10 to-transparent blur-sm pointer-events-none"></div>
         </div>
       </div>
     );
