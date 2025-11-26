@@ -15,7 +15,8 @@ interface GameBoardProps {
     penaltyAnimations?: PenaltyAnimation[]; // Floating penalty numbers
 }
 
-const BLOCK_SIZE = 36;
+// Removed static BLOCK_SIZE
+
 
 // Particle System Interface
 interface Particle {
@@ -44,7 +45,34 @@ const GameBoard: React.FC<GameBoardProps> = ({
     penaltyAnimations = []
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [blockSize, setBlockSize] = useState(30); // Default start size
     const animationFrameRef = useRef<number>(0);
+
+    // Dynamic Sizing
+    useEffect(() => {
+        const updateSize = () => {
+            if (containerRef.current) {
+                const { width, height } = containerRef.current.getBoundingClientRect();
+                // Account for padding (approx 6px total)
+                const availableWidth = width - 6;
+                const availableHeight = height - 6;
+
+                const sizeX = availableWidth / BOARD_WIDTH;
+                const sizeY = availableHeight / BOARD_HEIGHT;
+                const newSize = Math.floor(Math.min(sizeX, sizeY));
+                setBlockSize(Math.max(10, newSize));
+            }
+        };
+
+        const ro = new ResizeObserver(updateSize);
+        if (containerRef.current) ro.observe(containerRef.current);
+
+        // Initial check
+        setTimeout(updateSize, 0);
+
+        return () => ro.disconnect();
+    }, []);
 
     // Animation physics state
     const physicsRef = useRef({
@@ -134,7 +162,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
         if (isMega) {
             physicsRef.current.shakeIntensity = 20; // Massive shake
-            floatingTextRef.current = { text: "TETRIS!", y: BOARD_HEIGHT * BLOCK_SIZE / 2, opacity: 1 };
+            floatingTextRef.current = { text: "TETRIS!", y: BOARD_HEIGHT * blockSize / 2, opacity: 1 };
         }
 
         // For each block in the clearing rows, spawn particles
@@ -142,8 +170,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
             currentGrid[y].forEach((cell, x) => {
                 if (cell !== 0 && typeof cell === 'string') {
                     const color = TETROMINOS[cell as TetrominoType].color;
-                    const centerX = x * BLOCK_SIZE + BLOCK_SIZE / 2;
-                    const centerY = y * BLOCK_SIZE + BLOCK_SIZE / 2;
+                    const centerX = x * blockSize + blockSize / 2;
+                    const centerY = y * blockSize + blockSize / 2;
 
                     // Mega clear uses Gold/Festive confetti colors
                     const particleCount = isMega ? 40 : 12;
@@ -161,8 +189,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
                         const speed = isMega ? 15 : 8;
 
                         particlesRef.current.push({
-                            x: centerX + (Math.random() - 0.5) * BLOCK_SIZE,
-                            y: centerY + (Math.random() - 0.5) * BLOCK_SIZE,
+                            x: centerX + (Math.random() - 0.5) * blockSize,
+                            y: centerY + (Math.random() - 0.5) * blockSize,
                             vx: (Math.random() - 0.5) * speed,
                             vy: (Math.random() - 0.5) * speed - (isMega ? 5 : 2), // Explosive upwards
                             life: 1.0,
@@ -185,9 +213,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
         hasSnow: boolean = false,
         overrideColor?: string
     ) => {
-        const px = x * BLOCK_SIZE;
-        const py = y * BLOCK_SIZE;
-        const size = BLOCK_SIZE;
+        const px = x * blockSize;
+        const py = y * blockSize;
+        const size = blockSize;
         const config = TETROMINOS[type];
 
         ctx.save();
@@ -249,9 +277,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
     };
 
     const drawGhostBlock = (ctx: CanvasRenderingContext2D, x: number, y: number, type: TetrominoType) => {
-        const px = x * BLOCK_SIZE;
-        const py = y * BLOCK_SIZE;
-        const size = BLOCK_SIZE;
+        const px = x * blockSize;
+        const py = y * blockSize;
+        const size = blockSize;
         const config = TETROMINOS[type];
 
         ctx.save();
@@ -314,14 +342,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
         ctx.lineWidth = 1;
         for (let x = 0; x <= BOARD_WIDTH; x++) {
             ctx.beginPath();
-            ctx.moveTo(x * BLOCK_SIZE, 0);
-            ctx.lineTo(x * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
+            ctx.moveTo(x * blockSize, 0);
+            ctx.lineTo(x * blockSize, BOARD_HEIGHT * blockSize);
             ctx.stroke();
         }
         for (let y = 0; y <= BOARD_HEIGHT; y++) {
             ctx.beginPath();
-            ctx.moveTo(0, y * BLOCK_SIZE);
-            ctx.lineTo(BOARD_WIDTH * BLOCK_SIZE, y * BLOCK_SIZE);
+            ctx.moveTo(0, y * blockSize);
+            ctx.lineTo(BOARD_WIDTH * blockSize, y * blockSize);
             ctx.stroke();
         }
 
@@ -498,8 +526,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     useEffect(() => {
         const canvas = canvasRef.current;
         if (canvas) {
-            canvas.width = BOARD_WIDTH * BLOCK_SIZE;
-            canvas.height = BOARD_HEIGHT * BLOCK_SIZE;
+            canvas.width = BOARD_WIDTH * blockSize;
+            canvas.height = BOARD_HEIGHT * blockSize;
         }
 
         const loop = () => {
@@ -514,8 +542,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }, [grid, activePiece, lastAction, clearingLines]);
 
     return (
-        <div className="
-      relative h-full aspect-[10/20] 
+        <div
+            ref={containerRef}
+            className="
+      relative h-full w-full max-w-[90vw] md:max-w-none aspect-[10/20] 
       flex items-center justify-center 
       rounded-xl overflow-hidden 
       p-[2.5px]

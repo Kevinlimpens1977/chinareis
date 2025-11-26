@@ -188,7 +188,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                 </div>
 
                 {/* 3D Title */}
-                <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-8 relative z-10 text-center select-none"
+                <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none mb-6 md:mb-8 relative z-10 text-center select-none"
                     style={{
                         fontFamily: 'Montserrat, sans-serif',
                         color: '#ef4444',
@@ -206,7 +206,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                 {/* Countdown & Action */}
                 <div className="w-full max-w-md mx-auto mb-8">
                     <SnowyContainer className="w-full">
-                        <div className="flex flex-col gap-6 items-center p-2">
+                        <div className="flex flex-col gap-6 items-center p-4 md:p-2">
                             {/* Timer */}
                             <div className="flex gap-2 sm:gap-4 md:gap-6 items-center justify-center w-full">
                                 {[
@@ -217,15 +217,15 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                                 ].map((item, i, arr) => (
                                     <React.Fragment key={item.label}>
                                         <div className="text-center min-w-[3rem]">
-                                            <div className="text-lg sm:text-xl md:text-3xl font-mono font-bold text-white drop-shadow-md">
+                                            <div className="text-xl sm:text-xl md:text-3xl font-mono font-bold text-white drop-shadow-md">
                                                 {item.value.toString().padStart(2, '0')}
                                             </div>
-                                            <div className="text-[8px] md:text-[10px] uppercase text-red-200 font-bold tracking-wider opacity-80">
+                                            <div className="text-[9px] md:text-[10px] uppercase text-red-200 font-bold tracking-wider opacity-80">
                                                 {item.label}
                                             </div>
                                         </div>
                                         {i < arr.length - 1 && (
-                                            <div className="text-lg sm:text-xl md:text-3xl font-light text-red-500 animate-pulse pb-4">:</div>
+                                            <div className="text-xl sm:text-xl md:text-3xl font-light text-red-500 animate-pulse pb-4">:</div>
                                         )}
                                     </React.Fragment>
                                 ))}
@@ -234,8 +234,8 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                             {/* Welcome User */}
                             {user && (
                                 <div className="text-center">
-                                    <p className="text-xs md:text-sm text-cyan-300">
-                                        Welkom terug, <span className="font-bold text-white text-base md:text-lg">{user.name}</span>! 🎮
+                                    <p className="text-sm md:text-sm text-cyan-300">
+                                        Welkom terug, <span className="font-bold text-white text-lg md:text-lg">{user.name}</span>! 🎮
                                     </p>
                                 </div>
                             )}
@@ -243,7 +243,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                             {/* CTA Button */}
                             <button
                                 onClick={onStart}
-                                className="group relative w-full sm:w-auto px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black text-lg md:text-2xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border border-red-400/30"
+                                className="group relative w-full px-8 py-4 md:py-4 rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black text-xl md:text-2xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border border-red-400/30"
                             >
                                 <span className="animate-bounce">🎅</span>
                                 {user ? 'START SPEL' : 'SPEEL MEE'}

@@ -157,40 +157,56 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
   const showGhostToggle = isGhostAllowedForLevel(stats.level);
 
   return (
-    <div className="flex flex-col gap-3 md:gap-4 w-full h-full justify-between py-2 md:py-0">
+    <div className="flex flex-row md:flex-col gap-2 md:gap-4 w-full h-auto md:h-full justify-between md:justify-start items-stretch md:items-stretch py-1 md:py-0">
 
-      {/* NEXT PIECE */}
-      <NextPieceBox type={nextPiece} />
+      {/* Mobile: Left Side (Stats), Desktop: Top (Next Piece) */}
+      <div className="flex flex-row md:flex-col gap-2 flex-[2] md:flex-none order-1 md:order-2">
+        {/* SCORE */}
+        <StatBox
+          label="Score"
+          value={stats.score.toLocaleString()}
+          color="cyan"
+          icon="⭐"
+        />
 
-      {/* GHOST ACTIVE BADGE (only when ghost is ON) */}
-      {ghostEnabled && <GhostActiveBadge />}
+        {/* LINES */}
+        <StatBox
+          label="Lijnen"
+          value={stats.lines}
+          color="green"
+          icon="☰"
+        />
 
-      {/* SCORE */}
-      <StatBox
-        label="Score"
-        value={stats.score.toLocaleString()}
-        color="cyan"
-        icon="⭐"
-      />
+        {/* LEVEL (Hidden on very small screens if needed, or compact) */}
+        <StatBox
+          label="Niveau"
+          value={stats.level}
+          color="purple"
+          icon="📶"
+        />
+      </div>
 
-      {/* LINES */}
-      <StatBox
-        label="Lijnen"
-        value={stats.lines}
-        color="green"
-        icon="☰"
-      />
+      {/* Mobile: Right Side (Next Piece + Ghost), Desktop: Top (Next Piece) */}
+      <div className="flex flex-row md:flex-col gap-2 flex-1 md:flex-none justify-end order-2 md:order-1">
+        {/* GHOST TOGGLE */}
+        {showGhostToggle && (
+          <div className="w-16 md:w-full">
+            <GhostToggle />
+          </div>
+        )}
 
-      {/* LEVEL */}
-      <StatBox
-        label="Niveau"
-        value={stats.level}
-        color="purple"
-        icon="📶"
-      />
+        {/* NEXT PIECE */}
+        <div className="w-16 md:w-full">
+          <NextPieceBox type={nextPiece} />
+        </div>
+      </div>
 
-      {/* GHOST TOGGLE (only levels 1-2 and 7-10) */}
-      {showGhostToggle && <GhostToggle />}
+      {/* Ghost Active Badge - Desktop only or small on mobile? */}
+      {ghostEnabled && (
+        <div className="hidden md:block order-3">
+          <GhostActiveBadge />
+        </div>
+      )}
 
     </div>
   );

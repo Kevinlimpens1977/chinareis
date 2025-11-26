@@ -52,14 +52,14 @@ const LevelUpScreen: React.FC<LevelUpScreenProps> = ({ level, onContinue }) => {
                 <div className="relative mb-8">
                     {/* Glow layers */}
                     <div className="absolute inset-0 blur-3xl opacity-60">
-                        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-yellow-400">
+                        <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-yellow-400">
                             LEVEL {level}
                         </h1>
                     </div>
 
                     {/* Main 3D Text */}
                     <h1
-                        className="relative text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black select-none"
+                        className="relative text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black select-none"
                         style={{
                             fontFamily: 'Montserrat, sans-serif',
                             color: '#ffd65a',

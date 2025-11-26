@@ -39,7 +39,9 @@ const SnowEffect = forwardRef<SnowEffectHandle, {}>((props, ref) => {
 
     // Snowflakes Setup
     const flakes: any[] = [];
-    const maxFlakes = 250;
+    // Dynamic flake count
+    const isMobile = width < 768;
+    const maxFlakes = isMobile ? 80 : 250;
 
     const plowSpeed = 5;
     const sprayParticles: any[] = [];

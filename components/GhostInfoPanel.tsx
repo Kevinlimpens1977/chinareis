@@ -22,10 +22,10 @@ const GhostInfoPanel: React.FC<GhostInfoPanelProps> = ({ onClose }) => {
                     <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#22c55e_0%,#10b981_20%,#ffffff_25%,#10b981_30%,#22c55e_50%,#10b981_70%,#ffffff_75%,#10b981_80%,#22c55e_100%)] animate-spin-slow opacity-50"></div>
 
                     {/* Content */}
-                    <div className="relative w-full h-full bg-black/90 rounded-[calc(1.5rem-2px)] md:rounded-[calc(1.5rem-3px)] p-6 md:p-8">
+                    <div className="relative w-full h-full bg-black/90 rounded-[calc(1.5rem-2px)] md:rounded-[calc(1.5rem-3px)] p-4 md:p-8">
 
                         {/* Header */}
-                        <div className="text-center mb-6">
+                        <div className="text-center mb-4 md:mb-6">
                             <div className="flex items-center justify-center gap-3 mb-3">
                                 <span className="text-4xl animate-pulse">👻</span>
                                 <h2
@@ -88,16 +88,16 @@ const GhostInfoPanel: React.FC<GhostInfoPanelProps> = ({ onClose }) => {
                                         {row.level}
                                     </div>
                                     <div className={`text-center font-medium ${row.status === 'VERBODEN'
-                                            ? 'text-red-400 font-black'
-                                            : 'text-green-400'
+                                        ? 'text-red-400 font-black'
+                                        : 'text-green-400'
                                         }`}>
                                         {row.status}
                                     </div>
                                     <div className={`text-center font-mono font-black ${row.color === 'green' ? 'text-green-400' :
-                                            row.color === 'yellow' ? 'text-yellow-400' :
-                                                row.color === 'orange' ? 'text-orange-400' :
-                                                    row.color === 'red' ? 'text-red-400' :
-                                                        'text-gray-500'
+                                        row.color === 'yellow' ? 'text-yellow-400' :
+                                            row.color === 'orange' ? 'text-orange-400' :
+                                                row.color === 'red' ? 'text-red-400' :
+                                                    'text-gray-500'
                                         }`}>
                                         {row.penalty}
                                     </div>

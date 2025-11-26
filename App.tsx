@@ -126,6 +126,16 @@ const App: React.FC = () => {
 
   const snowEffectRef = useRef<SnowEffectHandle>(null);
 
+  // Touch Handling Refs
+  const touchRef = useRef({
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
+    startTime: 0,
+    isMoving: false
+  });
+
   // Sync refs
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
@@ -482,6 +492,55 @@ const App: React.FC = () => {
     triggerVisualAction('DROP');
   };
 
+  // --- Touch Controls ---
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (gameStateRef.current !== GameState.PLAYING || isPausedRef.current) return;
+    const touch = e.touches[0];
+    touchRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      lastX: touch.clientX,
+      lastY: touch.clientY,
+      startTime: Date.now(),
+      isMoving: true
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchRef.current.isMoving || gameStateRef.current !== GameState.PLAYING || isPausedRef.current) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchRef.current.lastX;
+    const deltaY = touch.clientY - touchRef.current.lastY;
+
+    // Horizontal Move (Threshold 20px)
+    if (Math.abs(deltaX) > 20) {
+      if (deltaX > 0) movePiece({ x: 1, y: 0 });
+      else movePiece({ x: -1, y: 0 });
+      touchRef.current.lastX = touch.clientX;
+    }
+
+    // Soft Drop (Threshold 30px)
+    if (deltaY > 30) {
+      drop();
+      touchRef.current.lastY = touch.clientY;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchRef.current.isMoving) return;
+    touchRef.current.isMoving = false;
+
+    const duration = Date.now() - touchRef.current.startTime;
+    const totalDeltaX = Math.abs(e.changedTouches[0].clientX - touchRef.current.startX);
+    const totalDeltaY = Math.abs(e.changedTouches[0].clientY - touchRef.current.startY);
+
+    // Tap to Rotate (Short duration, minimal movement)
+    if (duration < 300 && totalDeltaX < 10 && totalDeltaY < 10) {
+      rotatePiece();
+    }
+  };
+
   // --- Game Loop ---
   useEffect(() => {
     const loop = (time: number) => {
@@ -695,18 +754,29 @@ const App: React.FC = () => {
 
       {/* Exit Button (Only in Gameplay) */}
       {gameState === GameState.PLAYING && (
-        <button
-          onClick={handleExitClick}
-          className="absolute top-3 right-3 z-50 group hover:scale-110 transition-transform"
-          title="Verlaten / Pauze"
-        >
-          <div className="relative w-12 h-12 md:w-16 md:h-16">
-            <div className="absolute inset-0 text-4xl md:text-5xl drop-shadow-md">🎅</div>
-            <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
-              ✕
+        <>
+          <button
+            onClick={handleExitClick}
+            className="absolute top-3 right-3 z-50 group hover:scale-110 transition-transform"
+            title="Verlaten / Pauze"
+          >
+            <div className="relative w-12 h-12 md:w-16 md:h-16">
+              <div className="absolute inset-0 text-4xl md:text-5xl drop-shadow-md">🎅</div>
+              <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
+                ✕
+              </div>
             </div>
-          </div>
-        </button>
+          </button>
+
+          {/* Mobile Rotate Button */}
+          <button
+            className="md:hidden absolute bottom-6 right-6 w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center active:bg-white/30 transition-all z-50 touch-none shadow-lg active:scale-95"
+            onTouchStart={(e) => { e.preventDefault(); rotatePiece(); }}
+            onClick={(e) => { e.preventDefault(); rotatePiece(); }} // Fallback
+          >
+            <span className="text-3xl text-white drop-shadow-md">↻</span>
+          </button>
+        </>
       )}
 
       {/* Leaderboard / Pause Modal */}
@@ -792,9 +862,14 @@ const App: React.FC = () => {
             <div className="text-3xl filter drop-shadow-md animate-float">🎅</div>
           </div>
 
-          <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8 w-full">
+          <div
+            className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8 w-full touch-none"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
 
-            <div className="flex-1 h-full w-full flex items-center justify-center min-h-0 relative">
+            <div className="flex-1 h-full w-full flex items-center justify-center min-h-0 relative order-2 md:order-1">
               <GameBoard
                 grid={grid}
                 activePiece={activePiece}
@@ -805,7 +880,7 @@ const App: React.FC = () => {
               />
             </div>
 
-            <div className="flex-none w-full md:w-auto h-auto md:h-full flex items-center justify-center md:items-start order-2 md:order-1">
+            <div className="flex-none w-full md:w-auto h-auto md:h-full flex items-center justify-center md:items-start order-1 md:order-2">
               <HUD
                 stats={stats}
                 nextPiece={nextPiece}

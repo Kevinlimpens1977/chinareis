@@ -51,10 +51,10 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
 
                     {/* Content */}
-                    <div className="relative w-full h-full bg-black/90 rounded-[calc(1.5rem-2px)] md:rounded-[calc(1.5rem-3px)] p-6 md:p-8 flex flex-col max-h-[85vh]">
+                    <div className="relative w-full h-full bg-black/90 rounded-[calc(1.5rem-2px)] md:rounded-[calc(1.5rem-3px)] p-4 md:p-8 flex flex-col max-h-[85vh]">
 
                         {/* Header */}
-                        <div className="text-center mb-6 shrink-0">
+                        <div className="text-center mb-4 md:mb-6 shrink-0">
                             <h2 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-white uppercase tracking-tighter drop-shadow-sm">
                                 Pauze & Ranking
                             </h2>
@@ -62,7 +62,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         </div>
 
                         {/* Leaderboard List */}
-                        <div className="bg-white/5 rounded-xl overflow-hidden mb-6 border border-white/10 flex-1 min-h-0 flex flex-col">
+                        <div className="bg-white/5 rounded-xl overflow-hidden mb-4 md:mb-6 border border-white/10 flex-1 min-h-0 flex flex-col">
                             <div className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 bg-black/40 text-[9px] md:text-[10px] uppercase tracking-widest text-gray-400 font-bold border-b border-white/5 shrink-0">
                                 <span className="w-6 text-center">#</span>
                                 <span>Naam</span>
@@ -108,13 +108,13 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         <div className="flex gap-4 shrink-0">
                             <button
                                 onClick={onQuit}
-                                className="flex-1 py-3 md:py-4 rounded-xl bg-red-900/30 hover:bg-red-900/50 border border-red-500/30 text-red-200 font-bold text-xs md:text-sm transition-colors uppercase tracking-wider"
+                                className="flex-1 py-4 md:py-4 rounded-xl bg-red-900/30 hover:bg-red-900/50 border border-red-500/30 text-red-200 font-bold text-xs md:text-sm transition-colors uppercase tracking-wider"
                             >
                                 Stoppen
                             </button>
                             <button
                                 onClick={onResume}
-                                className="flex-[2] py-3 md:py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold text-sm md:text-base shadow-lg transition-transform transform hover:scale-[1.02] uppercase tracking-wider"
+                                className="flex-[2] py-4 md:py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold text-sm md:text-base shadow-lg transition-transform transform hover:scale-[1.02] uppercase tracking-wider"
                             >
                                 Doorgaan
                             </button>
