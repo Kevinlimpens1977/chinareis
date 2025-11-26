@@ -17,7 +17,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
 
                 {/* Header */}
                 <div className="text-center mb-8 mt-4">
-                    <h2 className="text-xs md:text-sm uppercase tracking-widest text-red-200 mb-2">Omroep Parkstad Presenteert</h2>
+                    <h2 className="text-xs md:text-sm uppercase tracking-widest text-red-200 mb-2">VanHier Presenteert</h2>
                     <h1 className="text-5xl md:text-7xl font-black leading-none mb-4 relative z-10"
                         style={{
                             fontFamily: 'Montserrat, sans-serif',
@@ -109,7 +109,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
 
                 {/* Footer */}
                 <div className="mt-6 text-center text-xs text-gray-400">
-                    <p>Powered by Omroep Parkstad 📻</p>
+                    <p>Powered by VanHier 📻</p>
                 </div>
             </div>
         </div>

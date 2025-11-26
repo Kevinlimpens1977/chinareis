@@ -58,7 +58,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                             <h2 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-white uppercase tracking-tighter drop-shadow-sm">
                                 Pauze & Ranking
                             </h2>
-                            <div className="text-cyan-300 text-[10px] md:text-xs tracking-[0.2em] uppercase mt-2 font-bold">Omroep Parkstad Top 10</div>
+                            <div className="text-cyan-300 text-[10px] md:text-xs tracking-[0.2em] uppercase mt-2 font-bold">VanHier Top 10</div>
                         </div>
 
                         {/* Leaderboard List */}

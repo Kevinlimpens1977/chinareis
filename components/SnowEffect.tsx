@@ -231,11 +231,11 @@ const SnowEffect = forwardRef<SnowEffectHandle, {}>((props, ref) => {
         ctx.beginPath(); ctx.arc(trailerX + 25, 0, 10, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(trailerX + 75, 0, 10, 0, Math.PI * 2); ctx.fill();
 
-        // Trailer Text "OMROEP PARKSTAD"
-        ctx.fillStyle = '#fef08a'; // Yellowish text
-        ctx.font = '900 10px Arial';
+        // Trailer Text "OMROEP LANDGRAAF"
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText('OMROEP PARKSTAD', trailerX + trailerW / 2, trailerY + 20);
+        ctx.fillText('OMROEP LANDGRAAF', trailerX + trailerW / 2, trailerY + 20);
 
         // Salt/Snow Pile in Trailer
         ctx.fillStyle = '#f1f5f9';

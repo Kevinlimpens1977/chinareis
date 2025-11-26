@@ -183,7 +183,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                 <div className="relative inline-block mb-4 animate-float">
                     <div className="absolute inset-0 bg-red-600 blur-md opacity-50 rounded-full"></div>
                     <h2 className="relative text-white drop-shadow-md tracking-[0.2em] text-[10px] md:text-xs font-bold uppercase bg-gradient-to-r from-red-800 to-red-600 px-4 py-1.5 rounded-full border border-red-400/50 shadow-lg">
-                        Omroep Parkstad Presenteert
+                        VanHier Presenteert
                     </h2>
                 </div>
 
