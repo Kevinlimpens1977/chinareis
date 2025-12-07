@@ -49,7 +49,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
                             <div className="flyer-zoom-container bg-red-950/40 rounded-xl border border-yellow-500/30 overflow-hidden relative group cursor-zoom-in">
                                 <div className="aspect-[4/5] w-full relative overflow-hidden">
                                     <img
-                                        src="/afbeeldingen/PHOTO-2025-12-03-11-29-15.jpg"
+                                        src="/PHOTO-2025-12-03-11-29-15.jpg"
                                         alt="Kas Limpens met uitleg"
                                         className="object-cover w-full h-full transform transition-transform duration-700 group-hover:scale-105"
                                     />
@@ -105,7 +105,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
 
                                 <a href="https://donatie.global-exploration.nl/sponsor/GE-2806?back=true&donation=true" target="_blank" rel="noopener noreferrer" className="block w-full max-w-[200px] aspect-square mb-4 relative group cursor-pointer">
                                     <img
-                                        src="/afbeeldingen/QR.jpg"
+                                        src="/QR.jpg"
                                         alt="Scan om te doneren"
                                         className="w-full h-full object-contain"
                                     />
