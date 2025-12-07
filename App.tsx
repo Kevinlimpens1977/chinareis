@@ -77,6 +77,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
 
   // Game State
   const [grid, setGrid] = useState<(string | number)[][]>(
@@ -597,6 +598,13 @@ const App: React.FC = () => {
         e.stopPropagation();
       }
 
+      // F12: Toggle Debug Panel visibility
+      if (e.key === 'F12') {
+        e.preventDefault();
+        setShowDebugPanel(prev => !prev);
+        return;
+      }
+
       // === DEBUG MODE: Keyboard Shortcuts ===
       // Only in PLAYING state
       if (gameStateRef.current === GameState.PLAYING) {
@@ -659,6 +667,8 @@ const App: React.FC = () => {
           console.log(`🎮 DEBUG: Ghost ${!ghostEnabled ? 'enabled' : 'disabled'}`);
           return;
         }
+
+
       }
 
       if (gameStateRef.current !== GameState.PLAYING || isPausedRef.current) return;
@@ -934,9 +944,9 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Debug Panel - Only visible during gameplay */}
+      {/* Debug Panel - Only visible during gameplay, toggle with F12 */}
       {gameState === GameState.PLAYING && (
-        <DebugPanel currentLevel={stats.level} />
+        <DebugPanel currentLevel={stats.level} visible={showDebugPanel} />
       )}
 
     </div>

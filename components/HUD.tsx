@@ -169,6 +169,8 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
     );
   };
 
+
+
   const showGhostToggle = isGhostAllowedForLevel(stats.level);
 
   return (
@@ -230,6 +232,8 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
           <GhostActiveBadge />
         </div>
       )}
+
+
 
     </div>
   );

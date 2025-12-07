@@ -53,16 +53,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
 
       if (authError) throw authError;
 
-      // 2. Create Player Record
-      if (authData.user) {
-        const { error: dbError } = await supabase.from('players').insert({
-          email: formData.email,
-          name: formData.name,
-          city: formData.city
-        });
 
-        if (dbError) throw dbError;
-      }
 
       // 3. Show success screen (Email confirmation required)
       setSuccess(true);

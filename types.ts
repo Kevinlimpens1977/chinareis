@@ -25,6 +25,7 @@ export interface LeaderboardEntry {
   name: string;
   city: string;
   highscore: number;
+  lotteryTickets?: number; // Optional as it might not be in all queries
 }
 
 export type TetrominoType = 'I' | 'J' | 'L' | 'O' | 'S' | 'T' | 'Z';

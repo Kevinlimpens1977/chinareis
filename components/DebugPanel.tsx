@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 
 interface DebugPanelProps {
     currentLevel: number;
+    visible?: boolean;
 }
 
-const DebugPanel: React.FC<DebugPanelProps> = ({ currentLevel }) => {
+const DebugPanel: React.FC<DebugPanelProps> = ({ currentLevel, visible = false }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+
+    // Don't render if not visible (toggle with F12)
+    if (!visible) return null;
 
     return (
         <div className="fixed bottom-4 left-4 z-[300] font-mono text-xs">
@@ -67,6 +71,16 @@ const DebugPanel: React.FC<DebugPanelProps> = ({ currentLevel }) => {
                                 Pause game
                             </span>
                         </div>
+
+                        {/* F12 Toggle */}
+                        <div className="flex items-start gap-2">
+                            <kbd className="bg-orange-900/30 border border-orange-500/50 px-2 py-1 rounded text-orange-400 text-[10px] font-bold min-w-[60px] text-center">
+                                F12
+                            </kbd>
+                            <span className="text-[11px] leading-tight">
+                                Hide this panel
+                            </span>
+                        </div>
                     </div>
 
                     {/* Current Info */}
@@ -94,3 +108,4 @@ const DebugPanel: React.FC<DebugPanelProps> = ({ currentLevel }) => {
 };
 
 export default DebugPanel;
+
