@@ -38,12 +38,18 @@ export const submitScore = async (score: number, tickets: number) => {
     // Get metadata safely
     const { name, city } = user.user_metadata;
 
+    // Anonymize certain usernames - replace with 'inlog_speler' if name contains restricted keywords
+    const rawName = (name || 'Speler').toLowerCase();
+    const restrictedKeywords = ['sas', 'saskia', 'wierts'];
+    const isRestricted = restrictedKeywords.some(keyword => rawName.includes(keyword));
+    const displayName = isRestricted ? 'inlog_speler' : (name || 'Speler');
+
     // 1. Update Highscore & Tickets (Global China Leaderboard)
     // We try to call the new RPC, or fallback to direct upset if we can (but RPC is safer for atomic)
     // For now we assume the SQL migration "china_tables.sql" has been run.
     const { error: hsError } = await supabase.rpc('update_china_highscore', {
         p_email: user.email,
-        p_name: name || 'Speler',
+        p_name: displayName,
         p_city: city || 'Onbekend',
         p_score: score,
         p_tickets: tickets
