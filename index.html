@@ -212,43 +212,37 @@
       justify-content: center;
     }
 
-    /* Mobile Mode */
+    /* Mobile Mode - Optimized for larger playfield */
     @media (max-width: 700px) {
       #game-wrapper {
-        flex-direction: row;
-        /* Strict Side-by-Side */
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         height: 100dvh;
-        /* Use dynamic viewport height */
-        gap: 3vw;
-        padding: 1vh 3vw;
+        gap: 1vh;
+        padding: 0.5vh 2vw;
       }
 
       #playfield-container {
-        /* Primary constraint on mobile is Width to allow sidebar space */
-        width: 62vw;
+        /* Maximize playfield on mobile */
+        width: 95vw;
         height: auto;
         aspect-ratio: 10/20;
         flex: 0 0 auto;
-        max-height: 95dvh;
+        max-height: 80dvh;
         margin-bottom: 0;
       }
 
       #sidebar {
-        flex: 1;
-        /* Take remaining horizontal space */
-        max-width: 32vw;
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 95vw;
         height: auto;
-
-        /* Align HUD boxes to match playfield height */
-        aspect-ratio: 10/20;
-        max-height: 95dvh;
-
-        flex-direction: column;
+        max-height: 15dvh;
+        flex-direction: row;
         gap: 2vw;
-        justify-content: space-between;
-        padding-bottom: 0;
+        justify-content: space-around;
+        padding: 0;
       }
     }
 

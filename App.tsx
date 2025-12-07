@@ -790,16 +790,16 @@ const App: React.FC = () => {
       {/* Background Ambience */}
       <ChinaBackground ref={backgroundRef} />
 
-      {/* Close Button - Always top-right, above everything */}
+      {/* Close Button - Top-left on mobile, top-right on desktop */}
       {gameState === GameState.PLAYING && (
         <button
           onClick={handleExitClick}
-          className="fixed top-3 right-3 z-[9999] group hover:scale-110 transition-transform"
+          className="fixed top-2 left-2 md:top-3 md:right-3 md:left-auto z-[9999] group hover:scale-110 transition-transform"
           title="Verlaten / Pauze"
         >
-          <div className="relative w-12 h-12 md:w-16 md:h-16">
-            <div className="absolute inset-0 text-4xl md:text-5xl drop-shadow-md">🐉</div>
-            <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
+          <div className="relative w-10 h-10 md:w-16 md:h-16">
+            <div className="absolute inset-0 text-3xl md:text-5xl drop-shadow-md">🐉</div>
+            <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-4 h-4 md:w-6 md:h-6 flex items-center justify-center text-[8px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
               ✕
             </div>
           </div>
@@ -872,37 +872,34 @@ const App: React.FC = () => {
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
         <div className="flex flex-col w-full h-full max-w-7xl mx-auto p-1 md:p-4 overflow-hidden animate-fade-in-up">
 
-          {/* Main Game Container */}
-          <div className="flex-1 min-h-0 flex flex-col md:flex-row items-start justify-center gap-2 md:gap-8 w-full touch-none"
+          {/* Main Game Container - Mobile: vertical stack, Desktop: horizontal */}
+          <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-8 w-full touch-none"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
 
-            {/* Left/Center: GameBoard + Header */}
-            <div className="flex-1 h-full w-full flex flex-col items-center justify-center min-h-0 relative order-2 md:order-1 gap-2">
+            {/* GameBoard Section - Takes priority on mobile */}
+            <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0 relative order-1 gap-1 md:gap-2">
 
-              {/* Header - Same width as GameBoard */}
-              <div className="flex-none relative group overflow-hidden rounded-xl md:rounded-2xl p-[1px] md:p-[2px] w-full max-w-[90vw] md:max-w-none aspect-[10/1] shadow-[0_0_15px_rgba(239,68,68,0.15)] transition-all duration-300">
-                {/* Animated Border */}
+              {/* Compact Header - Same width as GameBoard */}
+              <div className="flex-none relative group overflow-hidden rounded-lg md:rounded-2xl p-[1px] w-full max-w-[95vw] md:max-w-none shadow-[0_0_10px_rgba(239,68,68,0.15)]">
                 <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
-
-                {/* Content */}
-                <div className="relative w-full h-full bg-black/60 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] p-2 md:p-3 flex items-center">
+                <div className="relative w-full h-full bg-black/60 backdrop-blur-xl rounded-[calc(0.5rem-1px)] md:rounded-[calc(1rem-2px)] p-1.5 md:p-3 flex items-center">
                   <div className="flex justify-between items-center w-full">
-                    <div className="flex flex-col gap-0.5">
-                      <div className="text-[10px] md:text-xs uppercase tracking-widest text-gray-400">
+                    <div className="flex flex-col">
+                      <div className="text-[9px] md:text-xs uppercase tracking-widest text-gray-400">
                         Speler: <span className="text-white font-bold">{user?.name}</span>
                       </div>
-                      <div className="text-[10px] md:text-xs uppercase tracking-widest text-gray-400">
-                        Top Score: <span className="text-yellow-400 font-bold">{leaderboard[0]?.highscore?.toLocaleString() || 0}</span>
+                      <div className="text-[9px] md:text-xs uppercase tracking-widest text-gray-400">
+                        Top: <span className="text-yellow-400 font-bold">{leaderboard[0]?.highscore?.toLocaleString() || 0}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* GameBoard */}
+              {/* GameBoard - Maximized on mobile */}
               <div className="flex-1 w-full flex items-center justify-center min-h-0">
                 <GameBoard
                   grid={grid}
@@ -916,14 +913,13 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Right: HUD with top margin to avoid close button */}
-            <div className="flex-none w-full md:w-auto h-auto md:h-full flex items-center justify-center md:items-start order-1 md:order-2 mt-0 md:mt-20">
+            {/* HUD - Below on mobile, side on desktop */}
+            <div className="flex-none w-full md:w-auto h-auto md:h-full flex items-center justify-center md:items-start order-2 md:mt-20">
               <HUD
                 stats={stats}
                 nextPiece={nextPiece}
                 ghostEnabled={ghostEnabled}
                 onToggleGhost={() => {
-                  // Only allow toggle if ghost is allowed for current level
                   if (isGhostAllowedForLevel(stats.level)) {
                     setGhostEnabled(!ghostEnabled);
                   }
