@@ -66,6 +66,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
     }
   };
 
+  const handleGoogleSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing up with Google:', error);
+      setError('Kon niet registreren met Google.');
+    }
+  };
+
   if (success) {
     return (
       <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6">
@@ -108,6 +123,22 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
             {error}
           </div>
         )}
+
+        <div className="mb-6">
+          <button
+            onClick={handleGoogleSignup}
+            className="w-full py-3 rounded-xl bg-white text-gray-800 font-bold hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg mb-4"
+          >
+            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+            <span>Registreer met Google</span>
+          </button>
+
+          <div className="flex items-center gap-2 w-full">
+            <div className="h-px bg-white/20 flex-1"></div>
+            <span className="text-xs text-white/40 uppercase">of vul je gegevens in</span>
+            <div className="h-px bg-white/20 flex-1"></div>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

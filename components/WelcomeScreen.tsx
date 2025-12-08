@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LOTTERY_THRESHOLDS } from '../constants';
 import { KasChinaVideoPopup } from './KasChinaVideoPopup';
+import { supabase } from '../services/supabase';
 
 interface WelcomeScreenProps {
     onLogin: () => void;
@@ -13,6 +14,21 @@ const VIDEO_URL = "https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/si
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) => {
     const [showVideoPopup, setShowVideoPopup] = useState(false);
+
+    const handleGoogleLogin = async () => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error logging in with Google:', error);
+            alert('Kon niet inloggen met Google. Probeer het later opnieuw.');
+        }
+    };
 
     return (
         <>
@@ -177,6 +193,22 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
                                         <span className="text-2xl">🐲</span>
                                         SPEEL MEE & STEUN KAS
                                     </button>
+
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={handleGoogleLogin}
+                                            className="w-full py-3 rounded-xl bg-white text-gray-800 font-bold hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                                        >
+                                            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                                            <span>Doorgaan met Google</span>
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 w-full my-1">
+                                        <div className="h-px bg-yellow-500/10 flex-1"></div>
+                                        <span className="text-[10px] text-yellow-500/30 uppercase">of</span>
+                                        <div className="h-px bg-yellow-500/10 flex-1"></div>
+                                    </div>
 
                                     <button
                                         onClick={onLogin}
