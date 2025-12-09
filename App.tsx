@@ -12,6 +12,11 @@ import LevelUpScreen from './components/LevelUpScreen';
 import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
+import CreditShopScreen from './components/CreditShopScreen';
+import CreditSuccessScreen from './components/CreditSuccessScreen';
+import CreditCancelScreen from './components/CreditCancelScreen';
+import CreditBadge from './components/CreditBadge';
+import { getCredits, deductCredit } from './services/credits';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, LOTTERY_THRESHOLDS } from './constants';
 import { supabase, submitScore, getLeaderboard, ensurePlayerVerified } from './services/supabase';
@@ -75,6 +80,7 @@ const App: React.FC = () => {
   // --- State ---
   const [gameState, setGameState] = useState<GameState>(GameState.WELCOME);
   const [user, setUser] = useState<UserData | null>(null);
+  const [credits, setCredits] = useState<number>(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
@@ -150,6 +156,17 @@ const App: React.FC = () => {
 
   // Load Leaderboard and User Session on Mount
   useEffect(() => {
+    // Check for payment redirect params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('status') === 'success' || window.location.pathname.includes('/success')) {
+      // Clear URL but keep state
+      window.history.replaceState({}, '', '/');
+      setGameState(GameState.CREDITS_SUCCESS);
+    } else if (params.get('status') === 'canceled' || window.location.pathname.includes('/cancel')) {
+      window.history.replaceState({}, '', '/');
+      setGameState(GameState.CREDITS_CANCEL);
+    }
+
     const init = async () => {
       // 1. Fetch Leaderboard
       const lb = await getLeaderboard();
@@ -209,6 +226,12 @@ const App: React.FC = () => {
 
         // Ensure DB knows user is verified
         ensurePlayerVerified(session.user.email || '');
+
+        // Load credits
+        if (session.user.id) {
+          const c = await getCredits(session.user.id);
+          setCredits(c);
+        }
 
         // If we're on welcome, login, or registration screen, automatically go to title
         // so user can click "START SPEL" to start
@@ -728,7 +751,32 @@ const App: React.FC = () => {
     // setGameState(GameState.TITLE);
   };
 
-  const startGame = () => {
+  const startGame = async () => {
+    // CREDIT CHECK
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return; // Should be logged in
+
+    if (credits < 1) {
+      alert("Je hebt geen credits meer! Koop nieuwe credits om te spelen.");
+      setGameState(GameState.CREDITS);
+      return;
+    }
+
+    // Deduct Credit (optimistic UI update)
+    const oldCredits = credits;
+    setCredits(prev => Math.max(0, prev - 1));
+
+    const success = await deductCredit(authUser.id, oldCredits);
+    if (!success) {
+      // Rollback if failed (rare)
+      setCredits(oldCredits);
+      alert("Er ging iets mis met het afboeken van je credit.");
+      return;
+    }
+
+    // Play retro credit sound here if feasible
+    // const audio = new Audio('/sounds/coin.mp3'); audio.play();
+
     setGrid(Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(0)));
     setStats({ score: 0, lines: 0, level: 1, lotteryTickets: 0 });
     statsRef.current = { score: 0, lines: 0, level: 1, lotteryTickets: 0 };
@@ -789,6 +837,35 @@ const App: React.FC = () => {
 
       {/* Background Ambience */}
       <ChinaBackground ref={backgroundRef} />
+
+      {/* Credit Badge (Visible when logged in) */}
+      {user && gameState !== GameState.PLAYING && (
+        <div className="fixed top-4 right-4 z-[9000]">
+          <CreditBadge
+            credits={credits}
+            onClick={() => setGameState(GameState.CREDITS)}
+          />
+        </div>
+      )}
+
+      {/* Credit Screens */}
+      {gameState === GameState.CREDITS && (
+        <CreditShopScreen onClose={() => setGameState(GameState.TITLE)} />
+      )}
+      {gameState === GameState.CREDITS_SUCCESS && (
+        <CreditSuccessScreen onContinue={async () => {
+          // Refresh credits
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            const c = await getCredits(authUser.id);
+            setCredits(c);
+          }
+          setGameState(GameState.TITLE);
+        }} />
+      )}
+      {gameState === GameState.CREDITS_CANCEL && (
+        <CreditCancelScreen onBack={() => setGameState(GameState.TITLE)} />
+      )}
 
       {/* Close Button - Top-left on mobile, top-right on desktop */}
       {gameState === GameState.PLAYING && (
