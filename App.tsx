@@ -177,10 +177,22 @@ const App: React.FC = () => {
 
       if (access_token && refresh_token) {
         supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
-          if (!error && data.session) {
+          if (!error && data.session && data.session.user) {
+            console.log('✅ Google Login Successful. Session restored manually.');
+
+            // Set user immediately
+            const { name, city } = data.session.user.user_metadata;
+            setUser({
+              name: name || 'Speler',
+              city: city || 'Onbekend',
+              email: data.session.user.email || ''
+            });
+
             window.history.replaceState({}, document.title, "/");
             // Force state to Dashboard immediately
             setGameState(GameState.DASHBOARD);
+          } else {
+            console.error("❌ Google Login Failed:", error);
           }
         });
       }
