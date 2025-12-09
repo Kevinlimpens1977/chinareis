@@ -168,6 +168,24 @@ const App: React.FC = () => {
       setGameState(GameState.CREDITS_CANCEL);
     }
 
+    // Manual Hash Check for OAuth (Fix for Google Login)
+    const hash = window.location.hash;
+    if (hash.includes("access_token")) {
+      const params = new URLSearchParams(hash.substring(1));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
+          if (!error && data.session) {
+            window.history.replaceState({}, document.title, "/");
+            // Force state to Dashboard immediately
+            setGameState(GameState.DASHBOARD);
+          }
+        });
+      }
+    }
+
     const init = async () => {
       // 1. Fetch Leaderboard
       const lb = await getLeaderboard();

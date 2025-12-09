@@ -15,31 +15,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onLoginSuccess, onFor
     const [showResendConfirmation, setShowResendConfirmation] = useState(false);
     const [resendSuccess, setResendSuccess] = useState(false);
 
-    useEffect(() => {
-        // 1. Haal access_token uit de URL (Google OAuth callback)
-        const hash = window.location.hash;
-        if (hash.includes("access_token")) {
-            const params = new URLSearchParams(hash.substring(1));
-            const access_token = params.get("access_token");
-            const refresh_token = params.get("refresh_token");
 
-            if (access_token && refresh_token) {
-                // Supabase sessie instellen
-                supabase.auth.setSession({
-                    access_token,
-                    refresh_token
-                }).then(() => {
-                    // URL opschonen
-                    window.history.replaceState({}, document.title, "/");
-
-                    // Trigger login success (App.tsx will handle redirect to Dashboard)
-                    // The user code had window.location.href = "/dashboard", but since we are SPA,
-                    // letting App.tsx handle the auth state change is cleaner.
-                    // However, if the user insists on /dashboard, we might need to rely on App.tsx routing.
-                });
-            }
-        }
-    }, []);
 
     const handleResendConfirmation = async () => {
         if (!email) {
