@@ -160,9 +160,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
-        // 1. Fetch Leaderboard (Independent)
-        const lb = await getLeaderboard();
-        setLeaderboard(lb);
+        // 1. Fetch Leaderboard (Non-blocking background)
+        getLeaderboard().then(lb => setLeaderboard(lb)).catch(e => console.warn('Leaderboard fetch failed', e));
 
         // 2. Handle Google OAuth Redirect (Priority)
         const hash = window.location.hash;
@@ -246,6 +245,14 @@ const App: React.FC = () => {
 
     initApp();
 
+    // Failsafe: If for any reason initApp hangs, force loading to stop after 4 seconds
+    const timer = setTimeout(() => {
+      setIsAuthChecking(prev => {
+        if (prev) console.warn("⚠️ Force-stopping Auth Check (Timeout)");
+        return false;
+      });
+    }, 4000);
+
     // 5. Setup Auth Listener for future changes (Logout, etc)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -260,6 +267,7 @@ const App: React.FC = () => {
 
     return () => {
       authListener.subscription.unsubscribe();
+      clearTimeout(timer);
     };
   }, []); // Run once on mount
 
