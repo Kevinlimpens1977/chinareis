@@ -1,5 +1,8 @@
 import { supabase } from './supabase';
 
+console.log("ENV →", import.meta.env.VITE_SUPABASE_URL);
+console.log("ENV SITE →", import.meta.env.VITE_SITE_URL);
+
 export const buyCredits = async (purchaseType: '1credit' | '2credits' | 'pwyw', amount?: number) => {
     try {
         const { data: { user } } = await supabase.auth.getUser();
