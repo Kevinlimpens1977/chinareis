@@ -16,6 +16,7 @@ import CreditShopScreen from './components/CreditShopScreen';
 import CreditSuccessScreen from './components/CreditSuccessScreen';
 import CreditCancelScreen from './components/CreditCancelScreen';
 import CreditBadge from './components/CreditBadge';
+import DashboardScreen from './components/DashboardScreen';
 import { getCredits, deductCredit } from './services/credits';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, LOTTERY_THRESHOLDS } from './constants';
@@ -233,14 +234,15 @@ const App: React.FC = () => {
           setCredits(c);
         }
 
-        // If we're on welcome, login, or registration screen, automatically go to title
-        // so user can click "START SPEL" to start
+        // Redirect to DASHBOARD instead of TITLE
         if (gameStateRef.current === GameState.WELCOME ||
           gameStateRef.current === GameState.LOGIN ||
           gameStateRef.current === GameState.REGISTRATION ||
-          gameStateRef.current === GameState.FORGOT_PASSWORD) {
-          console.log('Redirecting to TITLE screen');
-          setGameState(GameState.TITLE);
+          gameStateRef.current === GameState.FORGOT_PASSWORD ||
+          gameStateRef.current === GameState.TITLE) {
+
+          console.log('Redirecting to DASHBOARD screen');
+          setGameState(GameState.DASHBOARD);
         }
       } else if (session?.user && !session.user.email_confirmed_at) {
         console.log('User signed in but email not confirmed yet');
@@ -367,11 +369,10 @@ const App: React.FC = () => {
 
     // 2. If lines need clearing, trigger animation phase
     if (linesToClear.length > 0) {
-      setClearingLines(linesToClear);
-
-      // Logic Update: If it's a Tetris (4 lines), give more time for the "Euphoric" animation
       const isTetris = linesToClear.length >= 4;
       const animationDelay = isTetris ? 1000 : 500;
+
+      setClearingLines(linesToClear);
 
       // Wait for explosion animation before processing score and shift
       setTimeout(() => {
@@ -864,7 +865,17 @@ const App: React.FC = () => {
         }} />
       )}
       {gameState === GameState.CREDITS_CANCEL && (
-        <CreditCancelScreen onBack={() => setGameState(GameState.TITLE)} />
+        <CreditCancelScreen onBack={() => setGameState(GameState.DASHBOARD)} />
+      )}
+
+      {/* DASHBOARD */}
+      {gameState === GameState.DASHBOARD && user && (
+        <DashboardScreen
+          user={user}
+          onPlay={startGame}
+          onBuyCredits={() => setGameState(GameState.CREDITS)}
+          onLogout={handleLogout}
+        />
       )}
 
       {/* Close Button - Top-left on mobile, top-right on desktop */}
