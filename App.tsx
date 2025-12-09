@@ -163,60 +163,25 @@ const App: React.FC = () => {
         // 1. Fetch Leaderboard (Non-blocking background)
         getLeaderboard().then(lb => setLeaderboard(lb)).catch(e => console.warn('Leaderboard fetch failed', e));
 
-        // 2. Handle Google OAuth Redirect (Priority)
+        // 2. Check for pending Auth Redirects (Hash or Code)
         const hash = window.location.hash;
-        if (hash && hash.includes("access_token")) {
-          console.log("🔑 Detect OAuth Hash, processing...");
-          const params = new URLSearchParams(hash.substring(1));
-          const access_token = params.get("access_token");
-          const refresh_token = params.get("refresh_token");
+        const search = window.location.search;
+        const hasAuthParams = (hash && hash.includes('access_token')) || (search && search.includes('code'));
 
-          // Clear URL immediately
-          window.history.replaceState({}, document.title, window.location.pathname);
-
-          if (access_token && refresh_token) {
-            console.log("⏳ OAUTH START: Setting session...");
-
-            // Race setSession against a 3s timeout to prevent hanging
-            const setSessionPromise = supabase.auth.setSession({ access_token, refresh_token });
-            const timeoutPromise = new Promise<{ data: { session: null }, error: any }>((_, reject) =>
-              setTimeout(() => reject(new Error("SetSession Timeout")), 3000)
-            );
-
-            try {
-              const { data, error } = await Promise.race([setSessionPromise, timeoutPromise]) as any;
-              console.log("⌛ OAUTH END: Result:", { hasSession: !!data?.session, error });
-
-              if (!error && data.session?.user) {
-                console.log("✅ Google Login Success via Hash");
-                // Hydrate User
-                const { name, city } = data.session.user.user_metadata;
-                setUser({
-                  name: name || 'Speler',
-                  city: city || 'Onbekend',
-                  email: data.session.user.email || ''
-                });
-
-                // Fetch credits (Non-blocking background)
-                getCredits(data.session.user.id).then(c => setCredits(c));
-
-                // Go to Dashboard immediately
-                setGameState(GameState.DASHBOARD);
-                setIsAuthChecking(false);
-                return; // Stop here, we are logged in
-              } else {
-                console.error("❌ OAuth Handshake Failed:", error);
-              }
-            } catch (err) {
-              console.error("❌ OAuth Critical Error (Timeout?):", err);
-            }
-          }
+        if (hasAuthParams) {
+          console.log("⏳ Auth Redirect detected. Waiting for Supabase to handle session...");
+          // We do NOT manual setSession anymore. We let detectSessionInUrl do it.
+          // We just wait for the onAuthStateChange event to fire.
+          return;
         }
 
-        // 3. Handle Stripe/Payment Redirects
+        // 3. Handle Stripe/Payment Redirects (Only if no auth params)
         const params = new URLSearchParams(window.location.search);
         if (params.get('status') === 'success') {
           window.history.replaceState({}, '', '/');
+          console.log("Stripe Success detected");
+          // Wait slightly for session? Or just show success? 
+          // Better check session too in case.
           setGameState(GameState.CREDITS_SUCCESS);
           setIsAuthChecking(false);
           return;
@@ -227,7 +192,7 @@ const App: React.FC = () => {
           return;
         }
 
-        // 4. Check Existing Session (if no OAuth happening)
+        // 4. Check Existing Session (Normal Load)
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           console.log("👤 Existing Session Found");
@@ -241,39 +206,69 @@ const App: React.FC = () => {
           if (session.user.email_confirmed_at) {
             // Load credits (Non-blocking)
             getCredits(session.user.id).then(c => setCredits(c));
-
-            // If verified, go to Dashboard (or Credits screens if applicable)
-            // Note: we don't override CREDITS_SUCCESS/CANCEL if they were set above, but they return early anyway.
             setGameState(GameState.DASHBOARD);
           }
         }
-
       } catch (err) {
         console.error("Initialization Error:", err);
       } finally {
-        setIsAuthChecking(false);
+        // If NOT waiting for auth params, stop loading
+        const hash = window.location.hash;
+        const search = window.location.search;
+        const hasAuthParams = (hash && hash.includes('access_token')) || (search && search.includes('code'));
+
+        if (!hasAuthParams) {
+          setIsAuthChecking(false);
+        }
       }
     };
 
     initApp();
 
-    // Failsafe: If for any reason initApp hangs, force loading to stop after 4 seconds
+    // Failsafe: If waiting for auth params but nothing happens for 5s, stop loading
     const timer = setTimeout(() => {
       setIsAuthChecking(prev => {
-        if (prev) console.warn("⚠️ Force-stopping Auth Check (Timeout)");
+        if (prev) console.warn("⚠️ Auth Check Timeout (Native Detection)");
         return false;
       });
-    }, 4000);
+    }, 5000);
 
-    // 5. Setup Auth Listener for future changes (Logout, etc)
+    // 5. Setup Auth Listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`🔐 Auth Event: ${event}`);
+
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setGameState(GameState.WELCOME);
-      } else if (event === 'SIGNED_IN' && session?.user && !isAuthChecking) {
-        // Only react to SIGNED_IN if we are not in the middle of init (to avoid race conditions)
-        // But since init sets isAuthChecking=false at the end, this might be fine.
-        // For now, let's trust the init logic for initial load.
+        setIsAuthChecking(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          console.log("✅ User Signed In/Refreshed");
+
+          // Hydrate User
+          const { name, city } = session.user.user_metadata;
+          setUser({
+            name: name || 'Speler',
+            city: city || 'Onbekend',
+            email: session.user.email || ''
+          });
+
+          // Load credits (Non-blocking)
+          getCredits(session.user.id).then(c => setCredits(c));
+
+          // Clear URL Hash if present (Auth successful)
+          if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+
+          // If currently loading or on login/welcome, go to Dashboard
+          if (isAuthChecking || gameStateRef.current === GameState.LOGIN || gameStateRef.current === GameState.WELCOME || gameStateRef.current === GameState.TITLE) {
+            setGameState(GameState.DASHBOARD);
+          }
+
+          setIsAuthChecking(false);
+          clearTimeout(timer);
+        }
       }
     });
 
