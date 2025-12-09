@@ -39,8 +39,15 @@ const AdminCredits: React.FC = () => {
             }
 
             // 2. Fetch Payments via Edge Function
-            console.log('[AdminCredits] Fetching payments...');
+            console.log('[AdminCredits] Fetching payments (MOCKED)...');
+
+            // MOCK BEHAVIOR: Return empty list as requested.
+            const paymentsData = { payments: [] };
+            const paymentsError = null;
+
+            /* ORIGINAL: 
             const { data: paymentsData, error: paymentsError } = await supabase.functions.invoke('list-payments');
+            */
 
             if (paymentsError) {
                 console.error('[AdminCredits] Payments Fetch Error:', paymentsError);

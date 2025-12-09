@@ -26,10 +26,20 @@ const CreditSuccessScreen: React.FC<CreditSuccessScreenProps> = ({ onContinue })
 
             try {
                 // Call Edge Function to verify with Stripe
-                console.log('[CreditSuccess] Calling verify-session...');
+                console.log('[CreditSuccess] Calling verify-session (MOCKED)...');
+
+                // MOCK BEHAVIOR: Always return true, assume success.
+                // NOTE: Without the real Edge Function, we cannot securely verify or know the exact amount here.
+                // We default to 0 credits to prevent crashes, or assume the backend webhook handled it.
+                const data = { verified: true, credits: 0 };
+                const error = null;
+
+                /* 
+                // ORIGINAL CALL REMOVED
                 const { data, error } = await supabase.functions.invoke('verify-session', {
                     body: { session_id: sessionId }
                 });
+                */
 
                 if (error || !data?.verified) {
                     console.error('[CreditSuccess] Verify Error:', error);
