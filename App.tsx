@@ -85,6 +85,7 @@ const App: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true); // New loading state
 
   // Game State
   const [grid, setGrid] = useState<(string | number)[][]>(
@@ -155,36 +156,31 @@ const App: React.FC = () => {
   useEffect(() => { clearingLinesRef.current = clearingLines; }, [clearingLines]);
   useEffect(() => { ghostEnabledRef.current = ghostEnabled; }, [ghostEnabled]);
 
-  // Load Leaderboard and User Session on Mount
+  // --- Consolidated Auth & Init Logic ---
   useEffect(() => {
-    // Check for payment redirect params
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('status') === 'success' || window.location.pathname.includes('/success')) {
-      // Clear URL but keep state
-      window.history.replaceState({}, '', '/');
-      setGameState(GameState.CREDITS_SUCCESS);
-    } else if (params.get('status') === 'canceled' || window.location.pathname.includes('/cancel')) {
-      window.history.replaceState({}, '', '/');
-      setGameState(GameState.CREDITS_CANCEL);
-    }
-
-    // Manual Hash Check for OAuth (Fix for Google Login)
-    const hash = window.location.hash;
-    if (hash && hash.includes("access_token")) {
+    const initApp = async () => {
       try {
-        const params = new URLSearchParams(hash.substring(1));
-        const access_token = params.get("access_token");
-        const refresh_token = params.get("refresh_token");
+        // 1. Fetch Leaderboard (Independent)
+        const lb = await getLeaderboard();
+        setLeaderboard(lb);
 
-        // Clear URL immediately to prevent double-processing and clean UI
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // 2. Handle Google OAuth Redirect (Priority)
+        const hash = window.location.hash;
+        if (hash && hash.includes("access_token")) {
+          console.log("🔑 Detect OAuth Hash, processing...");
+          const params = new URLSearchParams(hash.substring(1));
+          const access_token = params.get("access_token");
+          const refresh_token = params.get("refresh_token");
 
-        if (access_token && refresh_token) {
-          supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
-            if (!error && data.session && data.session.user) {
-              console.log('✅ Google Login Successful. Session restored manually.');
+          // Clear URL immediately
+          window.history.replaceState({}, document.title, window.location.pathname);
 
-              // Set user immediately for optimistic UI
+          if (access_token && refresh_token) {
+            const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+
+            if (!error && data.session?.user) {
+              console.log("✅ Google Login Success via Hash");
+              // Hydrate User
               const { name, city } = data.session.user.user_metadata;
               setUser({
                 name: name || 'Speler',
@@ -192,103 +188,80 @@ const App: React.FC = () => {
                 email: data.session.user.email || ''
               });
 
+              // Fetch credits
+              const c = await getCredits(data.session.user.id);
+              setCredits(c);
+
+              // Go to Dashboard
               setGameState(GameState.DASHBOARD);
+              setIsAuthChecking(false);
+              return; // Stop here, we are logged in
             } else {
-              console.error("❌ Google Login Failed:", error);
+              console.error("❌ OAuth Handshake Failed:", error);
             }
-          });
+          }
         }
-      } catch (e) {
-        console.error("Error parsing OAuth hash:", e);
-      }
-    }
 
-    const init = async () => {
-      // 1. Fetch Leaderboard
-      const lb = await getLeaderboard();
-      setLeaderboard(lb);
+        // 3. Handle Stripe/Payment Redirects
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('status') === 'success') {
+          window.history.replaceState({}, '', '/');
+          setGameState(GameState.CREDITS_SUCCESS);
+          setIsAuthChecking(false);
+          return;
+        } else if (params.get('status') === 'canceled') {
+          window.history.replaceState({}, '', '/');
+          setGameState(GameState.CREDITS_CANCEL);
+          setIsAuthChecking(false);
+          return;
+        }
 
-      // 2. Check Session
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Initial session check:', session);
-
-      if (session?.user) {
-        // Check if verified
-        if (session.user.email_confirmed_at) {
+        // 4. Check Existing Session (if no OAuth happening)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log("👤 Existing Session Found");
           const { name, city } = session.user.user_metadata;
-          const userData = {
+          setUser({
             name: name || 'Speler',
             city: city || 'Onbekend',
             email: session.user.email || ''
-          };
-          setUser(userData);
-          setUser(userData);
-          console.log('User already verified on mount:', userData);
+          });
 
-          // Ensure DB knows user is verified
-          ensurePlayerVerified(session.user.email || '');
+          if (session.user.email_confirmed_at) {
+            const c = await getCredits(session.user.id);
+            setCredits(c);
 
-          // Redirect to TITLE if verified
-          setGameState(GameState.TITLE);
-        } else {
-          console.log('User session found but email not confirmed');
+            // If verified, go to Dashboard (or Credits screens if applicable)
+            // Note: we don't override CREDITS_SUCCESS/CANCEL if they were set above, but they return early anyway.
+            setGameState(GameState.DASHBOARD);
+          }
         }
+
+      } catch (err) {
+        console.error("Initialization Error:", err);
+      } finally {
+        setIsAuthChecking(false);
       }
     };
-    init();
 
-    // Listen for auth changes (e.g. if they click the email link while app is open)
+    initApp();
+
+    // 5. Setup Auth Listener for future changes (Logout, etc)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, 'Session:', session);
-
-      if (event === 'PASSWORD_RECOVERY') {
-        setGameState(GameState.RESET_PASSWORD);
-        return;
-      }
-
-      // Handle any auth event where user is verified
-      if (session?.user && session.user.email_confirmed_at) {
-        const { name, city } = session.user.user_metadata;
-        const userData = {
-          name: name || 'Speler',
-          city: city || 'Onbekend',
-          email: session.user.email || ''
-        };
-        setUser(userData);
-
-        setUser(userData);
-
-        console.log('User verified and logged in:', userData);
-
-        // Ensure DB knows user is verified
-        ensurePlayerVerified(session.user.email || '');
-
-        // Load credits
-        if (session.user.id) {
-          const c = await getCredits(session.user.id);
-          setCredits(c);
-        }
-
-        // Redirect to DASHBOARD instead of TITLE
-        if (gameStateRef.current === GameState.WELCOME ||
-          gameStateRef.current === GameState.LOGIN ||
-          gameStateRef.current === GameState.REGISTRATION ||
-          gameStateRef.current === GameState.FORGOT_PASSWORD ||
-          gameStateRef.current === GameState.TITLE) {
-
-          console.log('Redirecting to DASHBOARD screen');
-          setGameState(GameState.DASHBOARD);
-        }
-      } else if (session?.user && !session.user.email_confirmed_at) {
-        console.log('User signed in but email not confirmed yet');
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setGameState(GameState.WELCOME);
+      } else if (event === 'SIGNED_IN' && session?.user && !isAuthChecking) {
+        // Only react to SIGNED_IN if we are not in the middle of init (to avoid race conditions)
+        // But since init sets isAuthChecking=false at the end, this might be fine.
+        // For now, let's trust the init logic for initial load.
       }
     });
 
-
-    // return () => {
-    //   authListener.subscription.unsubscribe();
-    // };
-  }, []);
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []); // Run once on mount
 
   // --- Logic ---
 
@@ -867,6 +840,22 @@ const App: React.FC = () => {
     setGameState(GameState.PLAYING);
     spawnPiece();
   };
+
+  // --- Render ---
+
+  if (isAuthChecking) {
+    return (
+      <div className="relative w-full h-[100dvh] flex flex-col items-center justify-center bg-black overflow-hidden">
+        <ChinaBackground ref={backgroundRef} />
+        <div className="z-50 flex flex-col items-center">
+          <div className="text-6xl mb-4 animate-bounce">🐲</div>
+          <h2 className="text-[#FFD700] font-arcade text-2xl tracking-widest animate-pulse">
+            LADEN...
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-[100dvh] flex flex-col bg-transparent overflow-hidden touch-none overscroll-none select-none">
