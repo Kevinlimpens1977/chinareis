@@ -170,31 +170,36 @@ const App: React.FC = () => {
 
     // Manual Hash Check for OAuth (Fix for Google Login)
     const hash = window.location.hash;
-    if (hash.includes("access_token")) {
-      const params = new URLSearchParams(hash.substring(1));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
+    if (hash && hash.includes("access_token")) {
+      try {
+        const params = new URLSearchParams(hash.substring(1));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
 
-      if (access_token && refresh_token) {
-        supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
-          if (!error && data.session && data.session.user) {
-            console.log('✅ Google Login Successful. Session restored manually.');
+        // Clear URL immediately to prevent double-processing and clean UI
+        window.history.replaceState({}, document.title, window.location.pathname);
 
-            // Set user immediately
-            const { name, city } = data.session.user.user_metadata;
-            setUser({
-              name: name || 'Speler',
-              city: city || 'Onbekend',
-              email: data.session.user.email || ''
-            });
+        if (access_token && refresh_token) {
+          supabase.auth.setSession({ access_token, refresh_token }).then(({ data, error }) => {
+            if (!error && data.session && data.session.user) {
+              console.log('✅ Google Login Successful. Session restored manually.');
 
-            window.history.replaceState({}, document.title, "/");
-            // Force state to Dashboard immediately
-            setGameState(GameState.DASHBOARD);
-          } else {
-            console.error("❌ Google Login Failed:", error);
-          }
-        });
+              // Set user immediately for optimistic UI
+              const { name, city } = data.session.user.user_metadata;
+              setUser({
+                name: name || 'Speler',
+                city: city || 'Onbekend',
+                email: data.session.user.email || ''
+              });
+
+              setGameState(GameState.DASHBOARD);
+            } else {
+              console.error("❌ Google Login Failed:", error);
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Error parsing OAuth hash:", e);
       }
     }
 
