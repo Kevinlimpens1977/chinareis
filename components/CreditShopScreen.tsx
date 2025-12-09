@@ -41,7 +41,8 @@ const CreditShopScreen: React.FC<CreditShopScreenProps> = ({ onClose }) => {
             }
         } catch (err: any) {
             console.error("Checkout error:", err);
-            setErrorMsg("Er ging iets mis bij het starten van de betaling.");
+            // Show the actual error message for debugging
+            setErrorMsg(`Fout: ${err.message || JSON.stringify(err) || 'Onbekende fout'}`);
             playSound('error');
             setLoading(false);
         }
