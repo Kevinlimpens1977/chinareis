@@ -175,28 +175,40 @@ const App: React.FC = () => {
           window.history.replaceState({}, document.title, window.location.pathname);
 
           if (access_token && refresh_token) {
-            const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+            console.log("⏳ OAUTH START: Setting session...");
 
-            if (!error && data.session?.user) {
-              console.log("✅ Google Login Success via Hash");
-              // Hydrate User
-              const { name, city } = data.session.user.user_metadata;
-              setUser({
-                name: name || 'Speler',
-                city: city || 'Onbekend',
-                email: data.session.user.email || ''
-              });
+            // Race setSession against a 3s timeout to prevent hanging
+            const setSessionPromise = supabase.auth.setSession({ access_token, refresh_token });
+            const timeoutPromise = new Promise<{ data: { session: null }, error: any }>((_, reject) =>
+              setTimeout(() => reject(new Error("SetSession Timeout")), 3000)
+            );
 
-              // Fetch credits
-              const c = await getCredits(data.session.user.id);
-              setCredits(c);
+            try {
+              const { data, error } = await Promise.race([setSessionPromise, timeoutPromise]) as any;
+              console.log("⌛ OAUTH END: Result:", { hasSession: !!data?.session, error });
 
-              // Go to Dashboard
-              setGameState(GameState.DASHBOARD);
-              setIsAuthChecking(false);
-              return; // Stop here, we are logged in
-            } else {
-              console.error("❌ OAuth Handshake Failed:", error);
+              if (!error && data.session?.user) {
+                console.log("✅ Google Login Success via Hash");
+                // Hydrate User
+                const { name, city } = data.session.user.user_metadata;
+                setUser({
+                  name: name || 'Speler',
+                  city: city || 'Onbekend',
+                  email: data.session.user.email || ''
+                });
+
+                // Fetch credits (Non-blocking background)
+                getCredits(data.session.user.id).then(c => setCredits(c));
+
+                // Go to Dashboard immediately
+                setGameState(GameState.DASHBOARD);
+                setIsAuthChecking(false);
+                return; // Stop here, we are logged in
+              } else {
+                console.error("❌ OAuth Handshake Failed:", error);
+              }
+            } catch (err) {
+              console.error("❌ OAuth Critical Error (Timeout?):", err);
             }
           }
         }
@@ -227,8 +239,8 @@ const App: React.FC = () => {
           });
 
           if (session.user.email_confirmed_at) {
-            const c = await getCredits(session.user.id);
-            setCredits(c);
+            // Load credits (Non-blocking)
+            getCredits(session.user.id).then(c => setCredits(c));
 
             // If verified, go to Dashboard (or Credits screens if applicable)
             // Note: we don't override CREDITS_SUCCESS/CANCEL if they were set above, but they return early anyway.
