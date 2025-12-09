@@ -17,12 +17,21 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ user, onPlay, onBuyCr
 
     useEffect(() => {
         const fetchCredits = async () => {
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            if (authUser) {
-                const c = await getCredits(authUser.id);
-                setCredits(c);
+            console.log('[Dashboard] Fetching user credits...');
+            try {
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+                if (authUser) {
+                    const c = await getCredits(authUser.id);
+                    console.log(`[Dashboard] Credits loaded: ${c}`);
+                    setCredits(c);
+                } else {
+                    console.warn('[Dashboard] No persisted user found during credit fetch');
+                }
+            } catch (err) {
+                console.error('[Dashboard] Error fetching credits:', err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         fetchCredits();
     }, []);

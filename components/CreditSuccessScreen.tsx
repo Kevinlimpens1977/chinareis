@@ -16,6 +16,8 @@ const CreditSuccessScreen: React.FC<CreditSuccessScreenProps> = ({ onContinue })
             const params = new URLSearchParams(window.location.search);
             const sessionId = params.get('session_id');
 
+            console.log(`[CreditSuccess] Start verification. SessionID=${sessionId}`);
+
             if (!sessionId) {
                 setStatus('error');
                 setErrorMsg('Geen sessie gevonden.');
@@ -24,42 +26,55 @@ const CreditSuccessScreen: React.FC<CreditSuccessScreenProps> = ({ onContinue })
 
             try {
                 // Call Edge Function to verify with Stripe
+                console.log('[CreditSuccess] Calling verify-session...');
                 const { data, error } = await supabase.functions.invoke('verify-session', {
                     body: { session_id: sessionId }
                 });
 
                 if (error || !data?.verified) {
+                    console.error('[CreditSuccess] Verify Error:', error);
                     throw new Error(error?.message || 'Verificatie mislukt');
                 }
+                console.log('[CreditSuccess] Verified Data:', data);
 
                 // If verified, credits returned from metadata
                 const creditsFromServer = data.credits;
                 setAddedCredits(creditsFromServer);
 
-                // Now update Profile via DB (Client-side update allowed by logic request, but better if EF did it. 
-                // The prompt step 4 says "Tel credits op in mijn Supabase database: PATCH naar tabel".
-                // Ideally this should be server side, but let's follow the prompt's implied flow or do it here if RLS allows.
-                // Actually, step 4 implies the frontend does it OR the EF does it. 
-                // Best practice: EF does it. But prompt says "4. Tel credits op". 
-                // Let's assume the EF handles the verification, and we update the DB here if EF didn't.
-                // BUT: EF is safer.
-                // Prompt: "3. ... De function moet deze waardes teruggeven aan de frontend. 4. Tel credits op..."
-                // This implies frontend orchestration. Okay.
-
+                // Update Profile
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
-                    // Fetch current first to increment accurately or use RPC inc?
-                    // Let's use RPC if available or simple update. 
-                    // Since we removed 'use_credit' RPC, we likely need to fetch, then update or create new RPC.
-                    // Or just direct update if RLS allows.
-                    // We will try a direct fetch-and-update for simplicity as per "PATCH naar tabel profiles".
+                    console.log(`[CreditSuccess] Updating credits for user ${user.id}`);
 
-                    const { data: profile } = await supabase.from('profiles').select('credits').eq('id', user.id).single();
+                    const { data: profile, error: fetchError } = await supabase
+                        .from('profiles')
+                        .select('credits')
+                        .eq('id', user.id)
+                        .maybeSingle(); // Changed from .single()
+
+                    if (fetchError) {
+                        console.error('[CreditSuccess] Profile Fetch Error:', fetchError);
+                        // Don't throw, maybe try blind update or handle? 
+                        // Check prompt: "Voorkom crashes door PGRST116". maybeSingle handles that.
+                    }
+
                     const current = profile?.credits || 0;
+                    const newTotal = current + creditsFromServer;
+                    console.log(`[CreditSuccess] Current: ${current}, Adding: ${creditsFromServer}, New Total: ${newTotal}`);
 
-                    await supabase.from('profiles').update({
-                        credits: current + creditsFromServer
-                    }).eq('id', user.id);
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ credits: newTotal })
+                        .eq('id', user.id);
+
+                    if (updateError) {
+                        console.error('[CreditSuccess] Update Error:', updateError);
+                        // Could throw here if strictly needed, but payment was verified.
+                        // Maybe show soft error or alert admin? 
+                        // For user flow, seeing "Success" is key, but DB must be synced.
+                        throw new Error("Kon credits niet bijwerken in database.");
+                    }
+                    console.log('[CreditSuccess] DB Update OK');
                 }
 
                 setStatus('success');
@@ -70,7 +85,7 @@ const CreditSuccessScreen: React.FC<CreditSuccessScreenProps> = ({ onContinue })
                 }, 4000);
 
             } catch (err: any) {
-                console.error("Verification failed:", err);
+                console.error("[CreditSuccess] Fatal Error:", err);
                 setStatus('error');
                 setErrorMsg(err.message || "Er ging iets mis bij het verifiëren.");
             }

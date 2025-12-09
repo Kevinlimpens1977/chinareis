@@ -21,16 +21,41 @@ const AdminCredits: React.FC = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        // 1. Fetch Users (Profiles)
-        const { data: profiles } = await supabase.from('profiles').select('*');
-        setUsers(profiles || []);
+        console.log('[AdminCredits] Fetching data...');
 
-        // 2. Fetch Payments via Edge Function
-        const { data: paymentsData, error } = await supabase.functions.invoke('list-payments');
-        if (paymentsData?.payments) {
-            setPayments(paymentsData.payments);
+        try {
+            // 1. Fetch Users (Profiles)
+            console.log('[AdminCredits] Fetching profiles...');
+            const { data: profiles, error: profilesError } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (profilesError) {
+                console.error('[AdminCredits] Profiles Fetch Error:', profilesError);
+            } else {
+                console.log(`[AdminCredits] Profiles fetched: ${profiles?.length || 0}`);
+                setUsers(profiles || []);
+            }
+
+            // 2. Fetch Payments via Edge Function
+            console.log('[AdminCredits] Fetching payments...');
+            const { data: paymentsData, error: paymentsError } = await supabase.functions.invoke('list-payments');
+
+            if (paymentsError) {
+                console.error('[AdminCredits] Payments Fetch Error:', paymentsError);
+            } else {
+                console.log(`[AdminCredits] Payments fetched: ${paymentsData?.payments?.length || 0}`);
+                if (paymentsData?.payments) {
+                    setPayments(paymentsData.payments);
+                }
+            }
+
+        } catch (err) {
+            console.error('[AdminCredits] Unexpected Error:', err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     if (!auth) {

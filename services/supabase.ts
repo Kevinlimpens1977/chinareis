@@ -32,8 +32,12 @@ export interface Player {
 }
 
 export const submitScore = async (score: number, tickets: number) => {
+    console.log(`[submitScore] Input: score=${score}, tickets=${tickets}`);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !user.email) return;
+    if (!user || !user.email) {
+        console.warn('[submitScore] No authenticated user found.');
+        return;
+    }
 
     // Get metadata safely
     const { name, city } = user.user_metadata;
@@ -47,6 +51,7 @@ export const submitScore = async (score: number, tickets: number) => {
     // 1. Update Highscore & Tickets (Global China Leaderboard)
     // We try to call the new RPC, or fallback to direct upset if we can (but RPC is safer for atomic)
     // For now we assume the SQL migration "china_tables.sql" has been run.
+    console.log('[submitScore] Calling update_china_highscore RPC...');
     const { error: hsError } = await supabase.rpc('update_china_highscore', {
         p_email: user.email,
         p_name: displayName,
@@ -56,10 +61,13 @@ export const submitScore = async (score: number, tickets: number) => {
     });
 
     if (hsError) {
-        console.error('Error updating china highscore:', hsError);
+        console.error('[submitScore] Error updating china highscore:', hsError);
+    } else {
+        console.log('[submitScore] Highscore updated successfully.');
     }
 
     // 2. Record specific game play
+    console.log('[submitScore] Inserting game play stats...');
     const { error: playError } = await supabase
         .from('china_game_plays') // NEW TABLE
         .insert({
@@ -71,38 +79,46 @@ export const submitScore = async (score: number, tickets: number) => {
         });
 
     if (playError) {
-        console.warn('Could not save china game play stats:', playError);
+        console.warn('[submitScore] Could not save china game play stats:', playError);
+    } else {
+        console.log('[submitScore] Game play stats saved.');
     }
 };
 
 export const getLeaderboard = async () => {
-    const { data, error } = await supabase
-        .from('china_players') // NEW TABLE
-        .select('name, city, highscore, lottery_tickets')
-        .order('highscore', { ascending: false })
-        .limit(50);
+    console.log('[getLeaderboard] Fetching leaderboard...');
+    try {
+        const { data, error } = await supabase
+            .from('china_players') // NEW TABLE
+            .select('name, city, highscore, lottery_tickets')
+            .order('highscore', { ascending: false })
+            .limit(50);
 
-    if (error) {
-        console.error('Error fetching china leaderboard:', error);
+        if (error) {
+            console.error('[getLeaderboard] Error fetching china leaderboard:', error);
+            return [];
+        }
+
+        if (!data) return [];
+        console.log(`[getLeaderboard] Fetched ${data.length} entries.`);
+
+        // Filter unique names (keep highest score per name)
+        const seenNames = new Set();
+        const uniqueLeaderboard = [];
+
+        for (const entry of data) {
+            if (!seenNames.has(entry.name)) {
+                seenNames.add(entry.name);
+                uniqueLeaderboard.push(entry);
+            }
+        }
+        return uniqueLeaderboard;
+    } catch (err) {
+        console.error('[getLeaderboard] Unexpected Error:', err);
         return [];
     }
-
-    if (!data) return [];
-
-    // Filter unique names (keep highest score per name)
-    const seenNames = new Set();
-    const uniqueLeaderboard = [];
-
-    for (const entry of data) {
-        if (!seenNames.has(entry.name)) {
-            seenNames.add(entry.name);
-            uniqueLeaderboard.push(entry);
-        }
-        if (uniqueLeaderboard.length >= 10) break;
-    }
-
-    return uniqueLeaderboard;
 };
+
 
 // Kept for backward compat or if needed, but not primarily used for china tables
 export const ensurePlayerVerified = async (email: string) => {

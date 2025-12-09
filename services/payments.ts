@@ -10,36 +10,44 @@ export const buyCredits = async (purchaseType: '1credit' | '2credits' | 'pwyw', 
             user_id: user.id
         };
 
-        if (purchaseType === 'pwyw') {
+        if (purchaseType === "pwyw") {
             if (!amount || amount <= 0) {
                 throw new Error("Ongeldig bedrag.");
             }
             body.amount_eur = amount;
         }
 
+        // 🟦 DEBUG 1 — environment variabelen
+        console.log("ENV CHECK:", {
+            SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+            SITE_URL: import.meta.env.VITE_SITE_URL
+        });
+
+        // 🟦 DEBUG 2 — body die wordt verstuurd
+        console.log("EDGE CALL BODY:", body);
+
         // Call Supabase Edge Function
-        // Using 'create-checkout' as specified
         const { data, error } = await supabase.functions.invoke('create-checkout', {
             body: body
         });
 
+        // 🟦 DEBUG 3 — error response
         if (error) {
-            // Try to extract a more meaningful error if possible, otherwise throw standard
-            console.error("Supabase invoke error:", error);
+            console.error("EDGE RESPONSE ERROR:", error);
             throw new Error(error.message || "Fout bij verbinden met betaalserver.");
         }
 
+        // 🟦 DEBUG 4 — success response
         if (data?.url) {
-            // Redirect to Stripe
+            console.log("EDGE RESPONSE SUCCESS:", data);
             window.location.href = data.url;
         } else {
-            console.error("No URL in data:", data);
+            console.error("EDGE RESPONSE NO URL:", data);
             throw new Error("Geen betaallink ontvangen van de server.");
         }
 
     } catch (error: any) {
-        console.error('Payment Flow Error:', error);
-        // User-friendly alert
+        console.error("Payment Flow Error:", error);
         alert(`Kon betaalpagina niet openen:\n${error.message || error}`);
     }
 };
