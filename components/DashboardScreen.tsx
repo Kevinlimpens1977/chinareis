@@ -17,7 +17,6 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ user, onPlay, onBuyCr
 
     useEffect(() => {
         const fetchCredits = async () => {
-            // We can get the ID from the current session
             const { data: { user: authUser } } = await supabase.auth.getUser();
             if (authUser) {
                 const c = await getCredits(authUser.id);
@@ -26,16 +25,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ user, onPlay, onBuyCr
             setLoading(false);
         };
         fetchCredits();
-
-        // Subscribe to credit changes for live updates (optional but nice)
-        // For now, simple fetch is enough as requested.
     }, []);
-
-    const handlePlayClick = () => {
-        if (credits !== null && credits > 0) {
-            onPlay();
-        }
-    };
 
     return (
         <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6">
@@ -61,34 +51,26 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ user, onPlay, onBuyCr
                         <span className="text-white text-sm uppercase tracking-widest mb-2">Jouw Saldo</span>
 
                         {loading ? (
-                            <span className="text-4xl animate-pulse text-gray-500">...</span>
+                            <span className="text-white animate-pulse">...</span>
                         ) : (
                             <div className="flex items-center gap-2">
                                 <span className="text-5xl font-bold text-[#FFD700] font-arcade drop-shadow-md">
-                                    {credits}
+                                    {credits ?? 0}
                                 </span>
                                 <span className="text-2xl">🏮</span>
                             </div>
                         )}
-
-                        <span className="text-white/60 text-xs mt-2">Credits beschikbaar</span>
+                        <p className="text-white/60 text-xs mt-2">Credits beschikbaar</p>
                     </div>
                 </div>
 
                 {/* Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button
-                        onClick={handlePlayClick}
-                        disabled={loading || (credits !== null && credits < 1)}
-                        className={`
-                            py-4 px-6 rounded-lg border-b-4 font-arcade text-xl uppercase tracking-widest transition-all
-                            ${!loading && credits !== null && credits > 0
-                                ? 'bg-gradient-to-r from-green-600 to-green-500 border-green-800 text-white hover:brightness-110 active:border-b-0 active:translate-y-1 shadow-[0_0_15px_rgba(34,197,94,0.4)]'
-                                : 'bg-gray-800 border-gray-900 text-gray-500 cursor-not-allowed grayscale'
-                            }
-                        `}
+                        onClick={onPlay}
+                        className="py-4 px-6 rounded-lg border-b-4 font-arcade text-xl uppercase tracking-widest transition-all bg-gradient-to-r from-green-600 to-green-500 border-green-800 text-white hover:brightness-110 active:border-b-0 active:translate-y-1 shadow-[0_0_15px_rgba(34,197,94,0.4)]"
                     >
-                        {loading ? 'Laden...' : (credits && credits > 0 ? '▶ START SPEL' : 'GEEN CREDITS')}
+                        ▶ START SPEL
                     </button>
 
                     <button
@@ -104,13 +86,6 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ user, onPlay, onBuyCr
                         </button>
                     </div>
                 </div>
-
-                {/* No Credits Warning */}
-                {!loading && credits !== null && credits < 1 && (
-                    <div className="mt-6 bg-red-500/20 border border-red-500 text-red-200 p-3 rounded text-center animate-pulse">
-                        ⚠️ Je hebt geen credits meer. Koop nieuwe credits om te spelen!
-                    </div>
-                )}
 
             </TetrisPanel>
         </div>

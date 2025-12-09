@@ -12,11 +12,11 @@ import LevelUpScreen from './components/LevelUpScreen';
 import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
-import CreditShopScreen from './components/CreditShopScreen';
+import CreditShop from './components/CreditShop';
 import CreditSuccessScreen from './components/CreditSuccessScreen';
 import CreditCancelScreen from './components/CreditCancelScreen';
-import CreditBadge from './components/CreditBadge';
 import DashboardScreen from './components/DashboardScreen';
+import AdminCredits from './components/AdminCredits';
 import { getCredits, deductCredit } from './services/credits';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, LOTTERY_THRESHOLDS } from './constants';
@@ -175,13 +175,11 @@ const App: React.FC = () => {
           return;
         }
 
-        // 3. Handle Stripe/Payment Redirects (Only if no auth params)
+        // 3. Handle Stripe/Payment Redirects
         const params = new URLSearchParams(window.location.search);
         if (params.get('status') === 'success') {
-          window.history.replaceState({}, '', '/');
+          window.history.replaceState({}, '', '/'); // Clean URL
           console.log("Stripe Success detected");
-          // Wait slightly for session? Or just show success? 
-          // Better check session too in case.
           setGameState(GameState.CREDITS_SUCCESS);
           setIsAuthChecking(false);
           return;
@@ -209,6 +207,13 @@ const App: React.FC = () => {
             setGameState(GameState.DASHBOARD);
           }
         }
+
+        // 5. Check for Admin Route (Simple client-side routing check)
+        if (window.location.pathname === '/admin/credits') {
+          setGameState(GameState.ADMIN_CREDITS);
+          return;
+        }
+
       } catch (err) {
         console.error("Initialization Error:", err);
       } finally {
@@ -878,20 +883,16 @@ const App: React.FC = () => {
       {/* Background Ambience */}
       <ChinaBackground ref={backgroundRef} />
 
-      {/* Credit Badge (Visible when logged in) */}
-      {user && gameState !== GameState.PLAYING && (
-        <div className="fixed top-4 right-4 z-[9000]">
-          <CreditBadge
-            credits={credits}
-            onClick={() => setGameState(GameState.CREDITS)}
-          />
-        </div>
-      )}
+      {/* Credit Badge REMOVED */}
 
       {/* Credit Screens */}
       {gameState === GameState.CREDITS && (
-        <CreditShopScreen onClose={() => setGameState(GameState.TITLE)} />
+        <CreditShop onClose={() => setGameState(GameState.TITLE)} />
       )}
+      {gameState === GameState.ADMIN_CREDITS && (
+        <AdminCredits />
+      )}
+
       {gameState === GameState.CREDITS_SUCCESS && (
         <CreditSuccessScreen onContinue={async () => {
           // Refresh credits
