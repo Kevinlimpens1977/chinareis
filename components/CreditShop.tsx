@@ -4,12 +4,12 @@ import PayWhatYouWant from './PayWhatYouWant';
 
 interface CreditShopProps {
     onClose: () => void;
+    onDevPlay?: () => void;
 }
 
-const CreditShop: React.FC<CreditShopProps> = ({ onClose }) => {
+const CreditShop: React.FC<CreditShopProps> = ({ onClose, onDevPlay }) => {
     const [loading, setLoading] = useState(false);
     const [showPwyw, setShowPwyw] = useState(false);
-    const [customAmount, setCustomAmount] = useState('15');
 
     const handleBuy = async (type: '1credit' | '2credits' | 'pwyw', amount?: number) => {
         setLoading(true);
@@ -85,6 +85,18 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose }) => {
                     </button>
                 </div>
 
+                {/* DEV BUTTON */}
+                {onDevPlay && (
+                    <div className="flex justify-center mb-6">
+                        <button
+                            onClick={onDevPlay}
+                            className="text-[10px] text-gray-500 hover:text-white uppercase tracking-widest border border-gray-500/30 px-3 py-1 rounded hover:bg-white/5 transition-all"
+                        >
+                            ondanks nul credits toch spelen
+                        </button>
+                    </div>
+                )}
+
                 {/* Loading State */}
                 {loading && (
                     <div className="text-center text-[#FFD700] animate-pulse my-4 font-bold">
@@ -92,14 +104,7 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose }) => {
                     </div>
                 )}
 
-                {/* PWYW Modal Overlay - Replaced with Component Logic if needed, or keep integrated. 
-                    Actually user asked for separate component in request 3), but instructions say 
-                    "Maak een nieuw component <PayWhatYouWant /> ... Style slider en knop ...".
-                    The user may want this INSIDE the shop or separate?
-                    "Option 3 (PWYW) -> opent een invoerveld". The current code does exactly that.
-                    But User Request 3 asked specifically for a Slider Component.
-                    Let's use the new PayWhatYouWant component inside the modal for better UX.
-                */}
+                {/* PWYW Modal Overlay */}
                 {showPwyw && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/95 rounded-lg p-6 animate-in fade-in duration-200">
                         <div className="w-full max-w-sm relative">
